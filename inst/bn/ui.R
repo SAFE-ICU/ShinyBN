@@ -14,6 +14,7 @@ dashboardPage(skin = "blue",
               ),
               dashboardSidebar(width = 240,
                                sidebarMenu(id = "sidebarMenu",
+                                           collapsed = T,
                                            menuItem("Home",
                                                     tabName = "home",
                                                     icon = icon("home")
@@ -69,176 +70,151 @@ dashboardPage(skin = "blue",
                                                       shiny::fluidRow(
                                                         shiny::column(
                                                           width = 3,
+                                                          tabBox(width=12,id="control_tabs",
+                                                                 tabPanel("Data",
+                                                                          status = "primary",
+                                                                          shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
+                                                                          shiny::selectInput('format','Data Format',c(".RData",".CSV")),
+                                                                          shiny::helpText("choose to discritize"),
+                                                                          radioButtons("choice", "Discretize Data:",
+                                                                                       choiceNames = list(
+                                                                                         "Yes","No"
+                                                                                       ),
+                                                                                       choiceValues = list(
+                                                                                         "Yes", "No"
+                                                                                       )),
+                                                                          shiny::helpText("Upload your data:"),
+                                                                          shiny::fileInput('dataFile',
+                                                                                           strong('File Input:'),
+                                                                                           accept = c('.RData','.csv')
+                                                                                           )
+                                                                          ),
 
-                                                          #Data input box
-                                                          shinydashboard::box(
-                                                            title = "Data Input",
-                                                            status = "primary",
-                                                            collapsible = TRUE,
-                                                            width = NULL,
-                                                            shiny::helpText("Upload your data:"),
-                                                            shiny::p("Note: Upload .RData file"),
+                                                                 tabPanel("Graph",
+                                                                          status = "primary",
+                                                                          helpText("update graph to view selected chain of inference"),
 
-                                                            # File input
-                                                            shiny::fileInput(
-                                                              'dataFile',
-                                                              strong('File Input:'),
-                                                              accept = c('.RData')
-                                                            )
-                                                          ),
+                                                                          shiny::fluidRow(shiny::column(12,actionButton('graphBtn', 'Update Graph'))),
+                                                                          sliderInput("degree", "chain of neighbors",
+                                                                                      min = 1, max = 5,
+                                                                                      value = 2
+                                                                                      )
+                                                                          ),
+                                                                 tabPanel("Save",
+                                                                          status = "primary",
+                                                                          shiny::helpText("Save your learned structure to save time"),
+                                                                          actionButton('saveBtn','Save Structure'),
+                                                                          textInput('path','Enter Directory with file Name', value = "file type .RData", width = NULL, placeholder = NULL),
+                                                                          shiny::helpText("Save your network graph"),
+                                                                          actionButton('saveBtn2','Save Graph'),
+                                                                          textInput('path2','Enter Directory with file Name', value = "file type .csv", width = NULL, placeholder = NULL)
+                                                                 ),
+                                                                 tabPanel("Learning",
+                                                                          status = "primary",
+                                                                          shiny::helpText("Learn structure or upload learned structure"),
+                                                                          shinyWidgets::radioGroupButtons(inputId = "net",
+                                                                                                          choices = c("Learn Structure" = 2,
+                                                                                                                      "Upload Structure" = 1),
+                                                                                                          selected = 1,
+                                                                                                          justified = FALSE
+                                                                          ),
 
-                                                          # Structural learning box
-                                                          shinydashboard::box(
-                                                            title = "Structural Learning",
-                                                            status = "primary",
-                                                            collapsible = TRUE,
-                                                            width = NULL,
+                                                                          # Conditional panel for uploading structure
+                                                                          shiny::conditionalPanel(
+                                                                            condition = "input.net == 1",
+                                                                            # File input
+                                                                            shiny::p("Note: Upload .RData file"),
+                                                                            shiny::fileInput(
+                                                                              'structFile',
+                                                                              strong('File Input:'),
+                                                                              accept = c('.RData')
+                                                                            )
+                                                                          ),
 
-                                                            shiny::helpText("Learn structure or upload learned structure"),
-                                                            shinyWidgets::radioGroupButtons(inputId = "net",
-                                                                                            choices = c("Learn Structure" = 2,
-                                                                                                        "Upload Structure" = 1),
-                                                                                            selected = 1,
-                                                                                            justified = FALSE
-                                                            ),
-
-                                                            # Conditional panel for uploading structure
-                                                            shiny::conditionalPanel(
-                                                              condition = "input.net == 1",
-                                                              # File input
-                                                              shiny::p("Note: Upload .RData file"),
-                                                              shiny::fileInput(
-                                                                'structFile',
-                                                                strong('File Input:'),
-                                                                accept = c('.RData')
-                                                              )
-
-
-                                                            ),
-
-                                                            # Conditional panel for learning structure
-                                                            shiny::conditionalPanel(
-                                                              condition = "input.net == 2",
-                                                              shiny::helpText("Select a structural learning algorithm:"),
-                                                              # Structural learning algorithm input select
-                                                              shiny::selectizeInput(
-                                                                inputId = "alg",
-                                                                shiny::h5("Learning Algorithm:"),
-                                                                choices = list(
-                                                                  "Score-based Learning" =
-                                                                    c("Hill Climbing" = "hc",
-                                                                      "Tabu" = "tabu"),
-                                                                  "Constraint-based Learning" =
-                                                                    c("Grow-Shrink" = "gs",
-                                                                      "Incremental Association" = "iamb",
-                                                                      "Fast IAMB" = "fast.iamb",
-                                                                      "Inter IAMB" = "inter.iamb"
-                                                                    ),
-                                                                  "Hybrid Learning" =
-                                                                    c("Max-Min Hill Climbing" = "mmhc",
-                                                                      "2-phase Restricted Maximization" = 'rsmax2'
-                                                                    ),
-                                                                  "Local Discovery Learning" =
-                                                                    c("Max-Min Parents and Children" = 'mmpc',
-                                                                      "Semi-Interleaved HITON-PC" = "si.hiton.pc",
-                                                                      "ARACNE" = "aracne",
-                                                                      "Chow-Liu" = "chow.liu"
-                                                                    )
-                                                                )
-                                                              ),
-                                                              sliderInput("boot", "Bootstrap replicates",
-                                                                          min = 1, max = 1000,
-                                                                          value = 10),
-                                                              sliderInput("SampleSize", "Proportion of sample for Bootstrap:",
-                                                                          min = 0, max = 1,
-                                                                          value = 0.7),
-                                                              sliderInput("edgeStrength", "Edge Strength",
-                                                                          min = 0, max = 1,
-                                                                          value = 0.5),
-                                                              sliderInput("directionStrength", "Direction Confidence:",
-                                                                          min = 0, max = 1,
-                                                                          value = 0.5),
-
-
-                                                              actionButton('learnBtn', 'Learn'),
-                                                              actionButton('learnSBtn','Learn simple')
-
-                                                            )
-
-                                                          ),
-                                                          shinydashboard::box(title = "Save Results",
-                                                                              status = "primary",
-                                                                              collapsible = TRUE,
-                                                                              width = NULL,
-                                                                              actionButton('saveBtn','Save Structure'),
-                                                                              textInput('path','Enter Directory with file Name', value = "file type .RData", width = NULL, placeholder = NULL),
-                                                                              actionButton('saveBtn2','Save Graph'),
-                                                                              textInput('path2','Enter Directory with file Name', value = "file type .csv", width = NULL, placeholder = NULL)
-
-
-                                                          ),
-                                                          shinydashboard::box(title = "Update plot/network graph",
-                                                                              status = "primary",
-                                                                              collapsible = TRUE,
-                                                                              width = NULL,
-                                                                              #helpText("build plot"),
-                                                                              shiny::fluidRow(shiny::column(4,actionButton('plotBtn', 'Simple Plot')),shiny::column(4,actionButton('plotStrengthBtn', 'Confidence Plot'))),
-                                                                              sliderInput("numInterval", "No. of confidence intervals",
-                                                                                          min = 1, max = 500,
-                                                                                          value = 25
-                                                                                          ),
-                                                                              shiny::fluidRow(shiny::column(12,actionButton('graphBtn', 'Update Graph'))),
-                                                                              sliderInput("degree", "chain of neighbors",
-                                                                                          min = 1, max = 5,
-                                                                                          value = 2
-                                                                                          )
-                                                                              ),
-                                                          shinydashboard::box(title = "Evidence",
-                                                                              status = "primary",
-                                                                              collapsible = TRUE,
-                                                                              width = NULL,
-                                                                              helpText("Select evidence to add to the model:"),
-                                                                              shiny::fluidRow(shiny::column(6,actionButton('insertBtn', 'Insert')),
-                                                                                              shiny::column(6,actionButton('removeBtn', 'Remove'))
-                                                                              ),
-                                                                              shiny::fluidRow(shiny::column(6,tags$div(id = 'placeholder1')),
-                                                                                              shiny::column(6,tags$div(id = 'placeholder2'))
+                                                                          # Conditional panel for learning structure
+                                                                          shiny::conditionalPanel(
+                                                                            condition = "input.net == 2",
+                                                                            shiny::helpText("Select a structural learning algorithm:"),
+                                                                            # Structural learning algorithm input select
+                                                                            shiny::selectizeInput(
+                                                                              inputId = "alg",
+                                                                              shiny::h5("Learning Algorithm:"),
+                                                                              choices = list(
+                                                                                "Score-based Learning" =
+                                                                                  c("Hill Climbing" = "hc",
+                                                                                    "Tabu" = "tabu"),
+                                                                                "Constraint-based Learning" =
+                                                                                  c("Grow-Shrink" = "gs",
+                                                                                    "Incremental Association" = "iamb",
+                                                                                    "Fast IAMB" = "fast.iamb",
+                                                                                    "Inter IAMB" = "inter.iamb"
+                                                                                  ),
+                                                                                "Hybrid Learning" =
+                                                                                  c("Max-Min Hill Climbing" = "mmhc",
+                                                                                    "2-phase Restricted Maximization" = 'rsmax2'
+                                                                                  ),
+                                                                                "Local Discovery Learning" =
+                                                                                  c("Max-Min Parents and Children" = 'mmpc',
+                                                                                    "Semi-Interleaved HITON-PC" = "si.hiton.pc",
+                                                                                    "ARACNE" = "aracne",
+                                                                                    "Chow-Liu" = "chow.liu"
+                                                                                  )
                                                                               )
+                                                                            ),
+                                                                            sliderInput("boot", "Bootstrap replicates",
+                                                                                        min = 1, max = 1000,
+                                                                                        value = 10),
+                                                                            sliderInput("SampleSize", "Proportion of sample for Bootstrap:",
+                                                                                        min = 0, max = 1,
+                                                                                        value = 0.7),
+                                                                            sliderInput("edgeStrength", "Edge Strength",
+                                                                                        min = 0, max = 1,
+                                                                                        value = 0.5),
+                                                                            sliderInput("directionStrength", "Direction Confidence:",
+                                                                                        min = 0, max = 1,
+                                                                                        value = 0.5),
 
-                                                          ),
-                                                          shinydashboard::box(title = "Event",
-                                                                              status = "primary",
-                                                                              collapsible = TRUE,
-                                                                              width = NULL,
-                                                                              helpText("Select an event of interest:"),
-                                                                              shiny::selectInput("event",
-                                                                                                 label = shiny::h5("Event Node:"),
-                                                                                                 "")
-                                                          )
+
+                                                                            actionButton('learnBtn', 'Learn'),
+                                                                            actionButton('learnSBtn','Learn simple')
+
+                                                                          )
+                                                                 ),
+                                                                 tabPanel("Inference",
+                                                                          status = "primary",
+                                                                          shiny::helpText("Display plot in inferece plot tab"),
+                                                                          shiny::fluidRow(shiny::column(3,actionButton('plotBtn', 'Simple')),shiny::column(4,actionButton('plotStrengthBtn', 'Confidence'))),
+                                                                          shiny::helpText("No, of iterations run for confidence plot"),
+                                                                          sliderInput("numInterval", "No. of confidence intervals",
+                                                                                      min = 1, max = 500,
+                                                                                      value = 25
+                                                                          ),
+                                                                          helpText("Select evidence to add to the model:"),
+                                                                          shiny::fluidRow(shiny::column(6,actionButton('insertBtn', 'Insert')),
+                                                                                          shiny::column(6,actionButton('removeBtn', 'Remove'))
+                                                                          ),
+                                                                          shiny::fluidRow(shiny::column(6,tags$div(id = 'placeholder1')),
+                                                                                          shiny::column(6,tags$div(id = 'placeholder2'))
+                                                                          ),
+                                                                          helpText("Select an event of interest:"),
+                                                                          shiny::selectInput("event",
+                                                                                             label = shiny::h5("Event Node:"),
+                                                                                             "")
+                                                                          )
+
+                                                                 )
 
                                                         ),
                                                         shiny::column(
                                                           width = 9,
-                                                          # Bayesian network box
-                                                          shinydashboard::box(
-                                                            title = "Bayesian Network",
-                                                            status = "primary",
-                                                            collapsible = TRUE,
-
-                                                            width = NULL,
-
-                                                            # d3 force directed network
-                                                            visNetworkOutput("netPlot",height = "800px")
-                                                          ),
-                                                          shinydashboard::box(title = "Inference Plot",
-                                                                              status = "primary",
-
-                                                                              collapsible = TRUE,
-                                                                              collapsed = FALSE,
-                                                                              width = NULL,
-                                                                              shiny::plotOutput("distPlot",height = "600px")
+                                                          tabBox(id = "visula_tabs",
+                                                                 width = 12,
+                                                                 tabPanel("Network Graph",
+                                                                          visNetworkOutput("netPlot",height = "600px")),
+                                                                 tabPanel("Inference Plot",
+                                                                          shiny::plotOutput("distPlot",height = "600px"))
+                                                                 )
                                                           )
-                                                        )
 
                                                       )
                               )

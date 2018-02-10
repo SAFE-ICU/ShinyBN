@@ -8,12 +8,12 @@ library('visNetwork')
 source('error.bar.R')
 
 shinyServer(function(input, output,session) {
-  options(shiny.maxRequestSize=30*1024^2)
-  D = readRDS('iris.Rdata')
-  DiscreteData <<- D
+  options(shiny.maxRequestSize=1000*1024^2)
   temp<- 1
-  bn.hc.boot <<- boot.strength(data = DiscreteData,R = 100,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")
-  bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength > 0.5 & bn.hc.boot$direction >0.4,]
+  D = readRDS('a.Rdata')
+  DiscreteData <<- D
+  bn.hc.boot <<- boot.strength(data = DiscreteData,R = 5,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")
+  bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength > 0.5 & bn.hc.boot$direction >0.5,]
   bn.hc.boot.average <<- cextend(averaged.network(bn.hc.boot.pruned))
   bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
   NetworkGraph <<- data.frame(directed.arcs(bn.hc.boot.average))
@@ -24,7 +24,6 @@ shinyServer(function(input, output,session) {
   EvidenceNode <<- c()
   updateSelectInput(session,'event',choices = nodeNames)
   rvs <<- reactiveValues(evidence = list(),values = list(),evidenceObserve = list(),valueObserve = list())
-
   networkData <<- NetworkGraph[,1:2]
   selectedNodes <<- nodeNames
   src <- NetworkGraph$from
@@ -46,20 +45,6 @@ shinyServer(function(input, output,session) {
   nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
   nodes[which(nodes$name == EventNode),3] = "Event"
   ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
-  #output$netPlot <- networkD3::renderSimpleNetwork({
-  #  networkD3::forceNetwork(Links = edges, Nodes = nodes,
-  #                          Source = "source",
-  #                          Target = "target",
-  #                          NodeID ="name",
-  #                          Group = "group",
-  #                          Value = "width",
-  #                          opacity = 0.9,
-  #                          arrows = TRUE,
-  #                          opacityNoHover = 0.9,
-  #                          zoom = TRUE,
-  #                          legend = T,
-  #                          colourScale = JS(ColourScale))
-  #})
   visNodes<- data.frame(id = selectedNodes,
                         label = selectedNodes,
                         group = nodes$group)
@@ -69,8 +54,8 @@ shinyServer(function(input, output,session) {
     visNetwork(visNodes, visEdges, width = "200%") %>%
       visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
       visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-      visGroups(groupname = "Event", color = list(background = "green",highlight = "yellow", hover = "yellow"))%>%
-      visGroups(groupname = "Evidence", color = list(background = "red",highlight = "yellow", hover = "yellow")) %>%
+      visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
+      visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
       visLegend(width = 0.1, position = "left")%>%
       visNodes(shape = "dot") %>%
       visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -91,61 +76,33 @@ shinyServer(function(input, output,session) {
                  else
                  {
                    tryCatch({
-                     #print("c")
-                     DiscreteData <<- readRDS(inFile$datapath)
-                     #print("cc")
-                     check = 0
-                     for(p in colnames(DiscreteData))
+                     if(input$format==".RData")
                      {
-                       #print(p)
-                       if(is.numeric(DiscreteData[,p]))
-                       {
-                         #print(check)
-                         check = check + 1
-                       }
-                     }
-                     #print(check)
-                     if(check > 0){
-                       tryCatch({
-                         for(k in colnames(DiscreteData[,sapply(DiscreteData,is.integer)]))
-                         {
-                           DiscreteData[,k] = as.numeric(DiscreteData[,k])
-                         }
-                         tryCatch({
-                           print("test")
-                           DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method="interval"))
-                         },error = function(e){
-                           print("error -2")
-
-                           DiscreteData <<- as.data.frame(apply(DiscreteData,2,as.factor))
-
-                         })
-
-                         DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
-                         DiscreteData <<- droplevels(DiscreteData)
-
-                       },error = function(e){
-                         print("error -1")
-                         output$netPlot<- renderForceNetwork({validate("Error:Data uploaded was not discrete, tried discretization but failed please upload discrete data frame as single object")})
-
-                       })
+                       DiscreteData <<- readRDS(inFile$datapath)
                      }
                      else
                      {
-                       print("d")
+                       DiscreteData <<- read.csv(inFile$datapath,stringsAsFactors = T)
+                     }
+                     if(input$choice=="Yes")
+                     {
+                       DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method="interval"))
+                       DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
+                       DiscreteData <<- droplevels(DiscreteData)
+                     }
+                     else
+                     {
+
                        DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
                        DiscreteData <<- droplevels(DiscreteData)
                      }
 
                    },error = function(e){
-                     print("error-3")
-                     output$netPlot<- renderForceNetwork({validate("Error:Data uploaded was not discrete or corrupted, tried discretization but failed please upload discrete data frame as single object")})
+                     print("error0")
+                     output$netPlot<- renderForceNetwork({validate(e)})
 
 
                    })
-
-
-
                    print("Data loaded")
                  }
 
@@ -223,21 +180,6 @@ shinyServer(function(input, output,session) {
                        nodes$group <- "not in use"
                        nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
                        nodes[which(nodes$name == EventNode),3] = "Event"
-                       ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
-                       #output$netPlot <- networkD3::renderSimpleNetwork({
-                       #  networkD3::forceNetwork(Links = edges, Nodes = nodes,
-                       #                          Source = "source",
-                       #                          Target = "target",
-                       #                          NodeID ="name",
-                       #                          Group = "group",
-                       #                          Value = "width",
-                       #                          opacity = 0.9,
-                       #                          arrows = TRUE,
-                       #                          opacityNoHover = 0.9,
-                       #                          zoom = TRUE,
-                       #                          legend = T,
-                       #                          colourScale = JS(ColourScale))
-                       #})
                        visNodes<- data.frame(id = selectedNodes,
                                              label = selectedNodes,
                                              group = nodes$group)
@@ -247,8 +189,8 @@ shinyServer(function(input, output,session) {
                          visNetwork(visNodes, visEdges, width = "200%") %>%
                            visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
                            visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-                           visGroups(groupname = "Event", color = list(background = "green",highlight = "yellow", hover = "yellow"))%>%
-                           visGroups(groupname = "Evidence", color = list(background = "red",highlight = "yellow", hover = "yellow")) %>%
+                           visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
+                           visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
                            visLegend(width = 0.1, position = "left")%>%
                            visNodes(shape = "dot") %>%
                            visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -257,7 +199,7 @@ shinyServer(function(input, output,session) {
                        })
                      },error = function(e){
                        print("error 1")
-                       output$netPlot<- renderForceNetwork({validate("Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results")})
+                       output$netPlot<- renderForceNetwork({validate(e)})
 
                      })
                    }
@@ -335,21 +277,6 @@ shinyServer(function(input, output,session) {
       nodes$group <- "not in use"
       nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
       nodes[which(nodes$name == EventNode),3] = "Event"
-      ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
-      #output$netPlot <- networkD3::renderSimpleNetwork({
-      #  networkD3::forceNetwork(Links = edges, Nodes = nodes,
-      #                          Source = "source",
-      #                          Target = "target",
-      #                          NodeID ="name",
-      #                          Group = "group",
-      #                          Value = "width",
-      #                          opacity = 0.9,
-      #                          arrows = TRUE,
-      #                          opacityNoHover = 0.9,
-      #                          zoom = TRUE,
-      #                          legend = T,
-      #                          colourScale = JS(ColourScale))
-      #})
       visNodes<- data.frame(id = selectedNodes,
                             label = selectedNodes,
                             group = nodes$group)
@@ -359,8 +286,8 @@ shinyServer(function(input, output,session) {
         visNetwork(visNodes, visEdges, width = "200%") %>%
           visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
           visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-          visGroups(groupname = "Event", color = list(background = "green",highlight = "yellow", hover = "yellow"))%>%
-          visGroups(groupname = "Evidence", color = list(background = "red",highlight = "yellow", hover = "yellow")) %>%
+          visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
+          visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -369,7 +296,7 @@ shinyServer(function(input, output,session) {
       })
     },error = function(e){
       print("error 2")
-      output$netPlot<- renderForceNetwork({validate("Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results")})
+      output$netPlot<- renderForceNetwork({validate(e)})#"Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results"
 
     })
 
@@ -488,21 +415,6 @@ shinyServer(function(input, output,session) {
       nodes$group <- "not in use"
       nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
       nodes[which(nodes$name == EventNode),3] = "Event"
-      ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
-      #output$netPlot <- networkD3::renderSimpleNetwork({
-      #  networkD3::forceNetwork(Links = edges, Nodes = nodes,
-      #                          Source = "source",
-      #                          Target = "target",
-      #                          NodeID ="name",
-      #                          Group = "group",
-      #                          Value = "width",
-      #                          opacity = 0.9,
-      #                          arrows = TRUE,
-      #                          opacityNoHover = 0.9,
-      #                          zoom = TRUE,
-      #                          legend = T,
-      #                          colourScale = JS(ColourScale))
-      #})
       visNodes<- data.frame(id = selectedNodes,
                             label = selectedNodes,
                             group = nodes$group)
@@ -512,8 +424,8 @@ shinyServer(function(input, output,session) {
         visNetwork(visNodes, visEdges, width = "200%") %>%
           visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
           visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-          visGroups(groupname = "Event", color = list(background = "green",highlight = "yellow", hover = "yellow"))%>%
-          visGroups(groupname = "Evidence", color = list(background = "red",highlight = "yellow", hover = "yellow")) %>%
+          visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
+          visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -521,8 +433,8 @@ shinyServer(function(input, output,session) {
           visIgraphLayout()
       })
     },error = function(e){
-      print("error 2")
-      output$netPlot<- renderForceNetwork({validate("Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results")})
+      print("error 3")
+      output$netPlot<- renderForceNetwork({validate(e)})
 
     })
 
@@ -562,8 +474,8 @@ shinyServer(function(input, output,session) {
       }))
 
     },error = function(e){
-      print("error 3")
-      output$netPlot<- renderForceNetwork({validate("Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results")})
+      print("error 4")
+      output$netPlot<- renderForceNetwork({validate(e)})
 
     })
   })
@@ -611,8 +523,8 @@ shinyServer(function(input, output,session) {
                 las=2)})
 
     },error = function(e){
-      print("error 4")
-      output$distPlot<- renderPlot({validate("Error: in processing your request of inference.Please set an evidence node first")})
+      print("error 5")
+      output$distPlot<- renderPlot({validate(e)})
     })
 
   })
@@ -639,8 +551,6 @@ shinyServer(function(input, output,session) {
       ee = 1
       ee$mean = colMeans(probT)
       ee$sd = apply(probT, 2, sd)
-      #print(ee)
-      #print(probs)
       output$distPlot = renderPlot({par(mar=c(5,3,3,3))
         par(oma=c(5,3,3,3))
         barx <-barplot(ee$mean,
@@ -654,8 +564,8 @@ shinyServer(function(input, output,session) {
         error.bar(barx,ee$mean, 1.96*ee$sd/sqrt(input$plotStrengthBtn))})
 
     },error = function(e){
-      print("error 4")
-      output$distPlot<- renderPlot({validate("Error: in processing your request of inference.Please set an evidence node first")})
+      print("error 6")
+      output$distPlot<- renderPlot({validate(e)})
     })
 
   })
@@ -665,7 +575,7 @@ shinyServer(function(input, output,session) {
 
     },error = function(e)
       {
-        print("Please add a valid directory")
+        print(e)
 
     })
 
@@ -677,13 +587,12 @@ shinyServer(function(input, output,session) {
 
     },error = function(e)
     {
-      print("Please add a valid directory")
+      print(e)
 
     })
   })
 
   observeEvent(input$graphBtn,{
-    #print(DiscreteData)
     for(elem in inserted)
     {
       EvidenceNode = c(EvidenceNode,input[[elem]])
@@ -704,26 +613,9 @@ shinyServer(function(input, output,session) {
       rename(target = id)
 
     edges$width <- 1
-    #print(nodes)
-    #print(edges)
     nodes$group <- "not in use"
     nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
     nodes[which(nodes$name == EventNode),3] = "Event"
-    ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
-    #output$netPlot <- networkD3::renderSimpleNetwork({
-    #  networkD3::forceNetwork(Links = edges, Nodes = nodes,
-    #                          Source = "source",
-    #                          Target = "target",
-    #                          NodeID ="name",
-    #                          Group = "group",
-    #                          Value = "width",
-    #                          opacity = 0.9,
-    #                          arrows = TRUE,
-    #                          opacityNoHover = 0.9,
-    #                          zoom = TRUE,
-    #                          legend = T,
-    #                          colourScale = JS(ColourScale))
-    #})
     visNodes<- data.frame(id = selectedNodes,
                           label = selectedNodes,
                           group = nodes$group)
@@ -733,8 +625,8 @@ shinyServer(function(input, output,session) {
       visNetwork(visNodes, visEdges, width = "200%") %>%
         visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
         visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-        visGroups(groupname = "Event", color = list(background = "green",highlight = "yellow", hover = "yellow"))%>%
-        visGroups(groupname = "Evidence", color = list(background = "red",highlight = "yellow", hover = "yellow")) %>%
+        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
+        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
         visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -746,7 +638,6 @@ shinyServer(function(input, output,session) {
 
   })
   observeEvent(input$degree,{
-    #print(DiscreteData)
     for(elem in inserted)
     {
       EvidenceNode = c(EvidenceNode,input[[elem]])
@@ -777,27 +668,9 @@ shinyServer(function(input, output,session) {
       rename(target = id)
 
     edges$width <- 1
-    #print(nodes)
-    #print(edges)
     nodes$group <- "not in use"
     nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
     nodes[which(nodes$name == EventNode),3] = "Event"
-    ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
-    #output$netPlot <- networkD3::renderSimpleNetwork({
-    #  networkD3::forceNetwork(Links = edges, Nodes = nodes,
-    #                          Source = "source",
-    #                          Target = "target",
-    #                          NodeID ="name",
-    #                          Group = "group",
-    #                          Value = "width",
-    #                          opacity = 0.9,
-    #                          arrows = TRUE,
-    #                          opacityNoHover = 0.9,
-    #                          zoom = TRUE,
-    #                          legend = T,
-    #                          colourScale = JS(ColourScale))
-    #})
-    print(nodes$group)
     visNodes<- data.frame(id = selectedNodes,
                           label = selectedNodes,
                           group = nodes$group)
@@ -807,8 +680,8 @@ shinyServer(function(input, output,session) {
       visNetwork(visNodes, visEdges, width = "200%") %>%
         visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
         visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-        visGroups(groupname = "Event", color = list(background = "green",highlight = "yellow", hover = "yellow"))%>%
-        visGroups(groupname = "Evidence", color = list(background = "red",highlight = "yellow", hover = "yellow")) %>%
+        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
+        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
         visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%

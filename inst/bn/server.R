@@ -86,6 +86,8 @@ shinyServer(function(input, output,session) {
                      }
                      if(input$choice=="Yes")
                      {
+                       int<- sapply(DiscreteData,is.integer)
+                       DiscreteData[,int] = lapply(DiscreteData[,int], as.numeric)
                        DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method="interval"))
                        DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
                        DiscreteData <<- droplevels(DiscreteData)

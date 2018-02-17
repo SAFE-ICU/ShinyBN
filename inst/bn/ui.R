@@ -5,6 +5,7 @@ library('shiny')
 library('shinydashboard')
 library('dplyr')
 library('visNetwork')
+library('shinyWidgets')
 source('error.bar.R')
 
 

@@ -5,6 +5,7 @@ library('shiny')
 library('shinydashboard')
 library('dplyr')
 library('visNetwork')
+library('shinyWidgets')
 source('error.bar.R')
 
 shinyServer(function(input, output,session) {
@@ -87,14 +88,15 @@ shinyServer(function(input, output,session) {
                      if(input$choice=="Yes")
                      {
                        int<- sapply(DiscreteData,is.integer)
-                       DiscreteData[,int] = lapply(DiscreteData[,int], as.numeric)
+                       DiscreteData[,int] <<- lapply(DiscreteData[,int], as.numeric)
                        DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method="interval"))
                        DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
                        DiscreteData <<- droplevels(DiscreteData)
+                       print(DiscreteData)
                      }
                      else
                      {
-
+                       #DiscreteData <<- lapply(DiscreteData,as,factor)
                        DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
                        DiscreteData <<- droplevels(DiscreteData)
                      }
@@ -132,6 +134,7 @@ shinyServer(function(input, output,session) {
                    {
                      tryCatch({
                        bn.hc.boot.average <<- readRDS(inFile$datapath)
+                       #print("2")
                        bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
                        print("Learned Structure loaded")
                        for(elem in 1:length(inserted))
@@ -312,7 +315,7 @@ shinyServer(function(input, output,session) {
 
       # Create a Progress object
       progress <- shiny::Progress$new()
-
+      print(DiscreteData)
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Learning network structure", value = 0)

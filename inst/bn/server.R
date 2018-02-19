@@ -7,6 +7,7 @@ library('dplyr')
 library('visNetwork')
 library('shinyWidgets')
 library('missRanger')
+library('shinyalert')
 source('error.bar.R')
 
 shinyServer(function(input, output,session) {
@@ -62,7 +63,7 @@ shinyServer(function(input, output,session) {
       visLegend(width = 0.1, position = "left")%>%
       visNodes(shape = "dot") %>%
       visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-      #visInteraction(navigationButtons = TRUE)%>%
+      visInteraction(navigationButtons = TRUE)%>%
       visIgraphLayout(layout = input$graph_layout)
   })
 
@@ -81,18 +82,31 @@ shinyServer(function(input, output,session) {
                    tryCatch({
                      if(input$format==".RData")
                      {
-                       DiscreteData <<- readRDS(inFile$datapath)
+                       if(file_ext(inFile$datapath) == "RData")
+                       {
+                         DiscreteData <<- readRDS(inFile$datapath)
+                       }
+                       else
+                       {
+                         shinyalert("Added file is not a .RData file. Try uploading again.", type = "error")
+                       }
+
                      }
                      else
                      {
-                       DiscreteData <<- read.csv(inFile$datapath,stringsAsFactors = T)
+                       if(file_ext(inFile$datapath) == "csv")
+                       {
+                         DiscreteData <<- read.csv(inFile$datapath,stringsAsFactors = T)
+                       }
+                       else
+                       {
+                         shinyalert("Added file is not a .csv file. Try uploading again.", type = "error")
+                       }
                      }
 
                    },error = function(e){
                      print("error0")
-                     output$netPlot<- renderForceNetwork({validate(e)})
-
-
+                     shinyalert(toString(e), type = "error")
                    })
                    print("Data loaded")
                  }
@@ -199,13 +213,13 @@ shinyServer(function(input, output,session) {
                            visLegend(width = 0.1, position = "left")%>%
                            visNodes(shape = "dot") %>%
                            visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-                           #visInteraction(navigationButtons = TRUE)%>%
+                           visInteraction(navigationButtons = TRUE)%>%
                            visIgraphLayout(layout = input$graph_layout)
                        })
                      },error = function(e){
                        print("error 1")
-                       output$netPlot<- renderForceNetwork({validate(e)})
-
+                       shinyalert(toString(e), type = "error")
+                       #output$netPlot<- renderForceNetwork({validate(e)})
                      })
                    }
                  }
@@ -296,12 +310,13 @@ shinyServer(function(input, output,session) {
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-          #visInteraction(navigationButtons = TRUE)%>%
+          visInteraction(navigationButtons = TRUE)%>%
           visIgraphLayout(layout = input$graph_layout)
       })
     },error = function(e){
       print("error 2")
-      output$netPlot<- renderForceNetwork({validate(e)})#"Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results"
+      shinyalert(toString(e), type = "error")
+      #output$netPlot<- renderForceNetwork({validate(e)})#"Error: in processing your request of structure learning. Possible reasins of error can be unsuited learning algorithm, .Rdata format not used for data or structure upload, inappropriate bnlearn file, thresholds set for pruning returns no results"
 
     })
 
@@ -434,12 +449,13 @@ shinyServer(function(input, output,session) {
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-          #visInteraction(navigationButtons = TRUE)%>%
+          visInteraction(navigationButtons = TRUE)%>%
           visIgraphLayout(layout = input$graph_layout)
       })
     },error = function(e){
       print("error 3")
-      output$netPlot<- renderForceNetwork({validate(e)})
+      shinyalert(toString(e), type = "error")
+      #output$netPlot<- renderForceNetwork({validate(e)})
 
     })
 
@@ -474,13 +490,15 @@ shinyServer(function(input, output,session) {
           #print(valID)
           updateSelectInput(session,valID, choices = levels(DiscreteData[,input[[id]]]))
         },error = function(e){
-          output$distPlot<-renderPlot({validate("error: Please learn structure or upload structure on new data uploaded to make infrences")})
+          shinyalert(toString("Please learn structure or upload structure on new data uploaded to make infrences"), type = "error")
+          #output$distPlot<-renderPlot({validate("error: Please learn structure or upload structure on new data uploaded to make infrences")})
         })
       }))
 
     },error = function(e){
       print("error 4")
-      output$netPlot<- renderForceNetwork({validate(e)})
+      shinyalert(toString(e), type = "error")
+      #output$netPlot<- renderForceNetwork({validate(e)})
 
     })
   })
@@ -529,7 +547,8 @@ shinyServer(function(input, output,session) {
 
     },error = function(e){
       print("error 5")
-      output$distPlot<- renderPlot({validate(e)})
+      shinyalert(toString(e), type = "error")
+      #output$distPlot<- renderPlot({validate(e)})
     })
 
   })
@@ -570,6 +589,7 @@ shinyServer(function(input, output,session) {
 
     },error = function(e){
       print("error 6")
+      shinyalert(toString(e), type = "error")
       output$distPlot<- renderPlot({validate(e)})
     })
 
@@ -644,7 +664,7 @@ shinyServer(function(input, output,session) {
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
         visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-        #visInteraction(navigationButtons = TRUE)%>%
+        visInteraction(navigationButtons = TRUE)%>%
         visIgraphLayout(layout = input$graph_layout)
     })
   })
@@ -686,7 +706,7 @@ shinyServer(function(input, output,session) {
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
         visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-        #visInteraction(navigationButtons = TRUE)%>%
+        visInteraction(navigationButtons = TRUE)%>%
         visIgraphLayout(layout = input$graph_layout)
     })
 
@@ -741,7 +761,7 @@ shinyServer(function(input, output,session) {
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
         visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-        #visInteraction(navigationButtons = TRUE)%>%
+        visInteraction(navigationButtons = TRUE)%>%
         visIgraphLayout(layout = input$graph_layout)
     })
 

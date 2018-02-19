@@ -8,6 +8,7 @@ library('visNetwork')
 library('shinyWidgets')
 library('missRanger')
 source('error.bar.R')
+library('shinyalert')
 
 
 dashboardPage(skin = "blue",
@@ -28,6 +29,7 @@ dashboardPage(skin = "blue",
                                )
               ),
               dashboardBody(id ="dashboardBody",
+                            useShinyalert(),
                             shinydashboard::tabItems(
                               shinydashboard::tabItem(tabName = "home",
                                                       fluidRow(box(title = "About the App",

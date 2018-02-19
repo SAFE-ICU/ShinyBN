@@ -6,6 +6,7 @@ library('shinydashboard')
 library('dplyr')
 library('visNetwork')
 library('shinyWidgets')
+library('missRanger')
 source('error.bar.R')
 
 
@@ -73,24 +74,21 @@ dashboardPage(skin = "blue",
                                                           width = 3,
                                                           tabBox(width=12,id="control_tabs",
                                                                  tabPanel("Data",
-                                                                          status = "primary",
                                                                           shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
                                                                           shiny::selectInput('format','Data Format',c(".RData",".CSV")),
-                                                                          shiny::helpText("choose to discritize"),
-                                                                          radioButtons("choice", "Discretize Data:",
-                                                                                       choiceNames = list(
-                                                                                         "Yes","No"
-                                                                                       ),
-                                                                                       choiceValues = list(
-                                                                                         "Yes", "No"
-                                                                                       )),
                                                                           shiny::helpText("Upload your data:"),
                                                                           shiny::fileInput('dataFile',
                                                                                            strong('File Input:'),
                                                                                            accept = c('.RData','.csv')
                                                                                            )
                                                                           ),
-
+                                                                 tabPanel("EDA",
+                                                                          shiny::helpText("Impute Missing Data"),
+                                                                          actionButton('impute','impute missingess'),
+                                                                          shiny::helpText('Discretize Data'),
+                                                                          shiny::selectInput('dtype','Discretization Type',c("quantile","interval")),
+                                                                          actionButton('discretize',"Discretize")
+                                                                          ),
                                                                  tabPanel("Graph",
                                                                           status = "primary",
                                                                           helpText("update graph to view selected chain of inference"),
@@ -99,17 +97,12 @@ dashboardPage(skin = "blue",
                                                                           sliderInput("degree", "chain of neighbors",
                                                                                       min = 1, max = 5,
                                                                                       value = 2
-                                                                                      )
-                                                                          ),
-                                                                 tabPanel("Save",
-                                                                          status = "primary",
-                                                                          shiny::helpText("Save your learned structure to save time"),
-                                                                          actionButton('saveBtn','Save Structure'),
-                                                                          textInput('path','Enter Directory with file Name', value = "file type .RData", width = NULL, placeholder = NULL),
+                                                                                      ),
+                                                                          shiny::selectInput('graph_layout','Layout',""),
                                                                           shiny::helpText("Save your network graph"),
                                                                           actionButton('saveBtn2','Save Graph'),
                                                                           textInput('path2','Enter Directory with file Name', value = "file type .csv", width = NULL, placeholder = NULL)
-                                                                 ),
+                                                                          ),
                                                                  tabPanel("Learning",
                                                                           status = "primary",
                                                                           shiny::helpText("Learn structure or upload learned structure"),
@@ -177,7 +170,10 @@ dashboardPage(skin = "blue",
 
 
                                                                             actionButton('learnBtn', 'Learn'),
-                                                                            actionButton('learnSBtn','Learn simple')
+                                                                            actionButton('learnSBtn','Learn simple'),
+                                                                            shiny::helpText("Save your learned structure to save time"),
+                                                                            actionButton('saveBtn','Save Structure'),
+                                                                            textInput('path','Enter Directory with file Name', value = "file type .RData", width = NULL, placeholder = NULL)
 
                                                                           )
                                                                  ),

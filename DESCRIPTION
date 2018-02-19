@@ -5,8 +5,8 @@ Version: 0.1.0
 Author: Shubham Maheshwari
 Maintainer: The package maintainer <shubham14101@iiitd.ac.in>
 Description: The package can be used to perform bootstrap supported structure learning on discrette data and/or allows the user to load their own learned structure for visualization. Also this is the first app which performs a side by side graph and inference exploration with the option for chained inferences.The user can also save the learned structure and graph.
-Depends: bnlearn,networkD3,rhandsontable,shiny,shinydashboard,dplyr,shinyWidgets,visNetwork
-Imports: bnlearn,networkD3,rhandsontable,shiny,shinydashboard,dplyr,shinyWidgets,visNetwork
+Depends: bnlearn,networkD3,rhandsontable,shiny,shinydashboard,dplyr,shinyWidgets,visNetwork, missRanger, shinyalert
+Imports: bnlearn,networkD3,rhandsontable,shiny,shinydashboard,dplyr,shinyWidgets,visNetwork, missRanger, shinyalert
 License: GPL-2
 Encoding: UTF-8
 LazyData: true

@@ -8,6 +8,7 @@ library('visNetwork')
 library('shinyWidgets')
 library('missRanger')
 library('shinyalert')
+library("tools")
 source('error.bar.R')
 
 shinyServer(function(input, output,session) {
@@ -115,17 +116,21 @@ shinyServer(function(input, output,session) {
                }
   )
   observeEvent(input$discretize,{
-    int<- sapply(DiscreteData,is.integer)
-    DiscreteData[,int] <<- lapply(DiscreteData[,int], as.numeric)
-    DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method=input$dtype))
-    DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
-    DiscreteData <<- droplevels(DiscreteData)
-    print(DiscreteData)
-
+    withProgress(message = "Discretizing data", value = 0, {
+      int<- sapply(DiscreteData,is.integer)
+      DiscreteData[,int] <<- lapply(DiscreteData[,int], as.numeric)
+      DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method=input$dtype))
+      DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
+      DiscreteData <<- droplevels(DiscreteData)
+      print(DiscreteData)
+      })
   })
 
   observeEvent(input$impute,{
-    DiscreteData<<- missRanger(DiscreteData,maxiter = 1)
+    withProgress(message = "Imputing missing data", value = 0, {
+      DiscreteData<<- missRanger(DiscreteData,maxiter = 1)
+    })
+
   })
 
 

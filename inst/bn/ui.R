@@ -9,6 +9,7 @@ library('shinyWidgets')
 library('missRanger')
 source('error.bar.R')
 library('shinyalert')
+library('shinycssloaders')
 
 
 dashboardPage(skin = "blue",
@@ -209,9 +210,9 @@ dashboardPage(skin = "blue",
                                                           tabBox(id = "visula_tabs",
                                                                  width = 12,
                                                                  tabPanel("Network Graph",
-                                                                          visNetworkOutput("netPlot",height = "600px")),
+                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px"))),
                                                                  tabPanel("Inference Plot",
-                                                                          shiny::plotOutput("distPlot",height = "600px"))
+                                                                          withSpinner(plotOutput("distPlot",height = "600px")))
                                                                  )
                                                           )
 

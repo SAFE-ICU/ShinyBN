@@ -89,7 +89,7 @@ dashboardPage(skin = "blue",
                                                                           shiny::helpText("Impute Missing Data"),
                                                                           actionButton('impute','impute missingess'),
                                                                           shiny::helpText('Discretize Data'),
-                                                                          shiny::selectInput('dtype','Discretization Type',c("quantile","interval")),
+                                                                          shiny::selectInput('dtype','Discretization Type',c("interval", "quantile")),
                                                                           actionButton('discretize',"Discretize")
                                                                           ),
                                                                  tabPanel("Graph",
@@ -210,9 +210,9 @@ dashboardPage(skin = "blue",
                                                           tabBox(id = "visula_tabs",
                                                                  width = 12,
                                                                  tabPanel("Network Graph",
-                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px"))),
+                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px")), color= "#f4b943"),
                                                                  tabPanel("Inference Plot",
-                                                                          withSpinner(plotOutput("distPlot",height = "600px")))
+                                                                          withSpinner(plotOutput("distPlot",height = "600px")), color="#ff69b4")
                                                                  )
                                                           )
 

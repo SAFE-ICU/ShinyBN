@@ -13,7 +13,7 @@ library('shinycssloaders')
 source('error.bar.R')
 
 shinyServer(function(input, output,session) {
-  options(shiny.maxRequestSize=1000*1024^2)
+  options(shiny.maxRequestSize=1500*1024^2)
   temp<- 1
   D = readRDS('a.Rdata')
   DiscreteData <<- D

@@ -4,6 +4,7 @@ library('rhandsontable')
 library('shiny')
 library('shinydashboard')
 library('dplyr')
+library('visNetwork')
 source('error.bar.R')
 
 
@@ -61,14 +62,13 @@ dashboardPage(skin = "blue",
                                                                    shiny::h5("Shubham Maheshwari (IIITD)"),
                                                                    shiny::h5("Anant Mittal (IIITD)"),
                                                                    shiny::h5("Dr.Tavpritesh Sethi (Stanford/AIIMS/IIITD)")
-
                                                                    )
-                                                      )
-                              ),
+                                                               )
+                                                      ),
                               shinydashboard::tabItem(tabName = "structure",
                                                       shiny::fluidRow(
                                                         shiny::column(
-                                                          width = 4,
+                                                          width = 3,
 
                                                           #Data input box
                                                           shinydashboard::box(
@@ -182,8 +182,17 @@ dashboardPage(skin = "blue",
                                                                               collapsible = TRUE,
                                                                               width = NULL,
                                                                               #helpText("build plot"),
-                                                                              shiny::fluidRow(shiny::column(3,actionButton('plotBtn', 'Simple Plot')),shiny::column(4,actionButton('plotStrengthBtn', 'Confidence Plot')), shiny::column(3,actionButton('graphBtn', 'Update Graph')))
-                                                          ),
+                                                                              shiny::fluidRow(shiny::column(4,actionButton('plotBtn', 'Simple Plot')),shiny::column(4,actionButton('plotStrengthBtn', 'Confidence Plot'))),
+                                                                              sliderInput("numInterval", "No. of confidence intervals",
+                                                                                          min = 1, max = 500,
+                                                                                          value = 25
+                                                                                          ),
+                                                                              shiny::fluidRow(shiny::column(12,actionButton('graphBtn', 'Update Graph'))),
+                                                                              sliderInput("degree", "chain of neighbors",
+                                                                                          min = 1, max = 5,
+                                                                                          value = 2
+                                                                                          )
+                                                                              ),
                                                           shinydashboard::box(title = "Evidence",
                                                                               status = "primary",
                                                                               collapsible = TRUE,
@@ -209,7 +218,7 @@ dashboardPage(skin = "blue",
 
                                                         ),
                                                         shiny::column(
-                                                          width = 8,
+                                                          width = 9,
                                                           # Bayesian network box
                                                           shinydashboard::box(
                                                             title = "Bayesian Network",
@@ -219,7 +228,7 @@ dashboardPage(skin = "blue",
                                                             width = NULL,
 
                                                             # d3 force directed network
-                                                            networkD3::forceNetworkOutput("structPlot",height="800px")
+                                                            visNetworkOutput("netPlot",height = "800px")
                                                           ),
                                                           shinydashboard::box(title = "Inference Plot",
                                                                               status = "primary",

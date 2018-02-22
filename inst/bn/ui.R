@@ -14,66 +14,72 @@ source('error.bar.R')
 library('shinythemes')
 
 
+myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
+                               .list = NULL) {
+  items <- c(list(...), .list)
+  # lapply(items, tagAssert, type = "li", class = "dropdown")
+  titleWidth <- validateCssUnit(titleWidth)
+  custom_css <- NULL
+  if (!is.null(titleWidth)) {
+    custom_css <- tags$head(tags$style(HTML(gsub("_WIDTH_",
+                                                 titleWidth, fixed = TRUE, "\n      @media (min-width: 768px) {\n .main-header > .navbar {\n  margin-left: _WIDTH_;text-align: left;\n }\n        .main-header .logo {\n          width: _WIDTH_;\n        }\n      }\n    "))))
+  }
+  tags$header(class = "main-header", custom_css, style = if (disable)
+    "display: none;", span(class = "logo", title), tags$nav(class = "navbar navbar-static-top",
+                                                            role = "navigation", span(shiny::icon("bars"), style = "display:none;"),
+                                                           # a(href = "#", class = "sidebar-toggle", `data-toggle` = "offcanvas",
+                                                           #  role = "button", span(class = "sr-only", "Toggle navigation")),
+                                                            div(class = "navbar-custom-menu", tags$ul(class = "nav navbar-nav",
+                                                                                                      items))))
+}
+
 dashboardPage(skin = "blue",
-              dashboardHeader(title = "Bayesian Networks",
-                              titleWidth = 200
+              myDashboardHeader(title = "ShinyBN",
+                                titleWidth = "400"
+
               ),
-              dashboardSidebar(width = 200,
+              dashboardSidebar(width = 40,
                                sidebarMenu(id = "sidebarMenu",
-                                           collapsed = T,
-                                           menuItem("About",
+                                           menuItem(text = "",
                                                     tabName = "About",
                                                     icon = icon("info")
                                            ),
-                                           menuItem("Structure & Inference",
+                                           menuItem(text = "",
                                                     icon = shiny::icon("globe"),
                                                     tabName = "structure"
                                            )
+
+
                                )
               ),
               dashboardBody(id ="dashboardBody",
+                            tags$head(tags$link(rel = "stylesheet",type = "text/css", href = "style.css")),
                             useShinyalert(),
                             #shinythemes::themeSelector(),
-                            theme = shinytheme("united"),
+                            #theme = shinytheme("united"),
                             tags$script(HTML("$('body').addClass('fixed');")),
                             shinydashboard::tabItems(
                             shinydashboard::tabItem(tabName = "About",
-                                                      fluidRow(box(title = "About the App",
+                                                      fluidRow(box(#title = "",
                                                                    status = "primary",
                                                                    width = 12,
                                                                    div(style = 'overflow-y: scroll'),
-                                                                   shiny::h4("Note*: The Demo version of the app is running for the Iris data set freely available in R"),
-                                                                   shiny::h1("Features"),
-                                                                   shiny::h3("Structure Part"),
-                                                                   shiny::h5("This is used for bayesian structure learning."),
-                                                                   shiny::h5("The user is provided with 2 options either to upload discrete data and the learned bayesian object which can then be used to
-                                                                             visualize the directed network graph and perform multiple chained inferences or to upload discrete data and simply choose from the paramters for structure learning
-                                                                             ,the app will then run the stucture learning algorithm with the chooses paramters after which graph visualization and infrences can be performed."),
-                                                                   shiny::h5("Structure learning part provides a variety of features like:-"),
-                                                                   shiny::h5("1) Prefered structure learning algorithm from the list of following algorithms:-Hill Climbing,Tabu,Grow-Shrink,Incremental Association,Fast IAMB,Inter IAMB,Max-Min Hill Climbing,2-phase Restricted Maximization,Max-Min Parents and Children,Semi-Interleaved HITON-PC,ARACNE,Chow-Liu"),
-                                                                   shiny::h5("2) User can select the number of bootstrap iteration to run between the range of 1-1000"),
-                                                                   shiny::h5("3) User can select the sample size from the data to be used for bootstrap"),
-                                                                   shiny::h5("4) User can choose to prune the network based on edge strength and direction confidence in the results of bootstap structure learning."),
-                                                                   shiny::h5("5) User can visualize the learned directed graph on the right side of the screen"),
-                                                                   shiny::h4("Note*: Due to size restrictions on data upload and the nature of the input it is required of the user to upload the directed data and/or the bnlearn object both as independent individual .Rdata files. This enables the user to be able to utilize the app even for large data with multiple thousands variables/samples."),
-                                                                   shiny::h3("Inference Part"),
-                                                                   shiny::h5("The app is capable of performing multiple chained inference.Platform is provided for user to not only
-                                                                             visualize the inference plot but also highlight the evidence and event nodes in the graph. The following are the use cases oh the inference tab:-"),
-                                                                   shiny::h5("1) Insert and Remove buttons are used to add/removes nodes and their values as evidencde for inference"),
-                                                                   shiny::h5("2) The event box can be used to set the appropriate node as event"),
-                                                                   shiny::h5("3) The update plot button is used to get the updated plot of inference based on currently set evidence and event."),
-                                                                   shiny::h5("4) The update graph button is used to update the network graph to visualizd the currently set evidence and event nodes where event is highlighted in green and evidence in red."),
-                                                                   shiny::h4("Note*: a single point of change is selected for updating the plot and the graph is because with large data with several hundred nodes dynamic changes is laggy and hence runs into invalid operating while fetching inferences/updating graphs."),
-                                                                   shiny::h3("Additional Features"),
-                                                                   shiny::h5("The user can user the option simple learn on the prefered algorithm to do a simple bayesian learning instead of a bootstraped one"),
-                                                                   shiny::h5("User has the option to save the learned structure object by adding the exact path with file name and .RData extension in the structure saving field provided under the save structure button."),
-                                                                   shiny::h5("User has the option to save the learned directed graph by adding the exact path with file name and .csv extension in the graph saving field provided under the save graph button."),
-                                                                   shiny::h5("User has the option to bulid a confidence plot for the aprroximate inference using the confidence plot button, which enables the user to better understand the approxiamte inference which generally varies due to randomness in sample selection."),
-                                                                   shiny::h4("Note*: The app is an open source project created to help people perfom and visualize structure learning on their own dataset for research and study. In no reason the app is meant for or to be used for commercial purposes. By agreeing to install the package or using the App you agree to these terms.If you found the app usefull please suggest it to other people who may find it of use. The app is still in Beta-phase and any and all suggestion for improvements are welcome."),
-                                                                   shiny::h3("Contributers"),
-                                                                   shiny::h5("Shubham Maheshwari (IIITD)"),
-                                                                   shiny::h5("Anant Mittal (IIITD)"),
-                                                                   shiny::h5("Dr.Tavpritesh Sethi (Stanford/AIIMS/IIITD)")
+                                                                   #shiny::h4("Note*: The Demo version of the app is running for the Iris data set freely available in R"),
+                                                                   shiny::h1("ShinyBN"),
+                                                                   shiny::h3("Bayesian Network Modelling and Inferencing"),
+                                                                   shiny::h5("ShinyBN is a ",
+                                                                            shiny::a(href = 'https://rstudio.github.io/shinydashboard/', 'shinydashboard'),
+                                                                            " for Bayesian network modeling and inferencing, ",
+                                                                            "powered by",
+                                                                             shiny::a(href = 'http://www.bnlearn.com', 'bnlearn'),
+                                                                             'and',
+                                                                             shiny::a(href = 'http://datastorm-open.github.io/visNetwork/', 'visNetwork'),
+                                                                             '.'
+                                                                   ),
+                                                                   shiny::h5('This app is a more general version of the ',
+                                                                             shiny::a(href = 'https://github.com/paulgovan/BayesianNetwork', 'BayesianNetwork'),
+                                                                             'web app.')
+
                                                                    )
                                                                )
                                                       ),
@@ -81,6 +87,8 @@ dashboardPage(skin = "blue",
                                                       shiny::fluidRow(
                                                         shiny::column(
                                                           width = 3,
+                                                          offset = -10,
+                                                          style='padding:0px;margin:0px',
                                                           tabBox(width=12,id="control_tabs",
                                                                  tabPanel("Data",
                                                                           shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
@@ -213,10 +221,14 @@ dashboardPage(skin = "blue",
                                                         ),
                                                         shiny::column(
                                                           width = 9,
+                                                          height = "auto",
+                                                          offset = -1,
+                                                          style='padding:0px;margin:0px',
                                                           tabBox(id = "visula_tabs",
                                                                  width = 12,
+
                                                                  tabPanel("Network Graph",
-                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px")), color= "#f4b943"),
+                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px")), color= "#ff69b4"),
                                                                  tabPanel("Inference Plot",
                                                                           withSpinner(plotOutput("distPlot",height = "600px")), color="#ff69b4")
                                                                  )
@@ -224,6 +236,7 @@ dashboardPage(skin = "blue",
 
                                                       )
                               )
+
 )
 )
 )

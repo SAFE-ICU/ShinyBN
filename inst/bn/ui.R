@@ -7,9 +7,10 @@ library('dplyr')
 library('visNetwork')
 library('shinyWidgets')
 library('missRanger')
-source('error.bar.R')
+library('tools')
 library('shinyalert')
 library('shinycssloaders')
+source('error.bar.R')
 
 
 dashboardPage(skin = "blue",
@@ -101,7 +102,7 @@ dashboardPage(skin = "blue",
                                                                                       min = 1, max = 5,
                                                                                       value = 2
                                                                                       ),
-                                                                          shiny::selectInput('graph_layout','Layout',""),
+                                                                          shiny::selectInput('graph_layout','Layout',"layout_nicely"),
                                                                           shiny::helpText("Save your network graph"),
                                                                           actionButton('saveBtn2','Save Graph'),
                                                                           textInput('path2','Enter Directory with file Name', value = "file type .csv", width = NULL, placeholder = NULL)

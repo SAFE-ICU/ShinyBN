@@ -7,7 +7,9 @@ library('dplyr')
 library('visNetwork')
 library('shinyWidgets')
 library('missRanger')
+library('tools')
 library('shinyalert')
+library('shinycssloaders')
 source('error.bar.R')
 
 shinyServer(function(input, output,session) {
@@ -56,10 +58,10 @@ shinyServer(function(input, output,session) {
                         to = NetworkGraph$to)
   output$netPlot<-renderVisNetwork({
     visNetwork(visNodes, visEdges, width = "200%") %>%
-      visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-      visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-      visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-      visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
+      visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+      visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+      visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+      visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
       visLegend(width = 0.1, position = "left")%>%
       visNodes(shape = "dot") %>%
       visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -136,98 +138,98 @@ shinyServer(function(input, output,session) {
   # Get the data selection from user
   observeEvent(input$structFile,
 
-               {# Get the uploaded file from user
-                 inFile <- input$structFile
-                 if (is.null(inFile))
-                 {
-                   print("Structure File is empty")
-                 }
-                 else
-                 {
-                   if(is.null(DiscreteData))
-                   {
-                     print("Please Upload Data File First")
-                   }
-                   else
-                   {
-                     tryCatch({
-                       bn.hc.boot.average <<- readRDS(inFile$datapath)
-                       #print("2")
-                       bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
-                       print("Learned Structure loaded")
-                       for(elem in 1:length(inserted))
-                       {
-                         removeUI(
-                           ## pass in appropriate div id
-                           selector = paste0('#', inserted[elem])
-                         )
+       {# Get the uploaded file from user
+         inFile <- input$structFile
+         if (is.null(inFile))
+         {
+           print("Structure File is empty")
+         }
+         else
+         {
+           if(is.null(DiscreteData))
+           {
+             print("Please Upload Data File First")
+           }
+           else
+           {
+             tryCatch({
+               bn.hc.boot.average <<- readRDS(inFile$datapath)
+               #print("2")
+               bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
+               print("Learned Structure loaded")
+               for(elem in 1:length(inserted))
+               {
+                 removeUI(
+                   ## pass in appropriate div id
+                   selector = paste0('#', inserted[elem])
+                 )
 
-                       }
-                       inserted <<- c()
-                       for(elem2 in 1:length(insertedV))
-                       {
-                         removeUI(
-                           ## pass in appropriate div id
-                           selector = paste0('#', insertedV[elem2])
-                         )
-
-                       }
-                       insertedV <<- c()
-                       rvs$evidence <<- c()
-                       rvs$value <<- c()
-                       rvs$evidenceObserve <<- c()
-                       rvs$valueObserve <<- c()
-                       output$distPlot <<- renderPlot(NULL)
-                       NetworkGraph <<- data.frame(directed.arcs(bn.hc.boot.average))
-                       nodeNames <<- names(bn.hc.boot.average$nodes)
-                       EventNode <<- nodeNames[1]
-                       EvidenceNode <<- c()
-                       updateSelectInput(session,'event',choices = nodeNames)
-                       networkData = NetworkGraph[,1:2]
-                       selectedNodes <<- nodeNames
-                       src <<- NetworkGraph$from
-                       target <<- NetworkGraph$to
-                       nodes <<- data.frame(name = nodeNames)
-                       nodes$id <- 0:(nrow(nodes) - 1)
-                       colnames(networkData) = c("src","target")
-                       edges <- networkData %>%
-                         left_join(nodes, by = c("src" = "name")) %>%
-                         select(-src) %>%
-                         rename(source = id) %>%
-                         left_join(nodes, by = c("target" = "name")) %>%
-                         select(-target) %>%
-                         rename(target = id)
-
-                       edges$width <- 1
-
-                       nodes$group <- "not in use"
-                       nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
-                       nodes[which(nodes$name == EventNode),3] = "Event"
-                       visNodes<- data.frame(id = selectedNodes,
-                                             label = selectedNodes,
-                                             group = nodes$group)
-                       visEdges<- data.frame(from = NetworkGraph$from,
-                                             to = NetworkGraph$to)
-                       output$netPlot<-renderVisNetwork({
-                         visNetwork(visNodes, visEdges, width = "200%") %>%
-                           visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-                           visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-                           visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-                           visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
-                           visLegend(width = 0.1, position = "left")%>%
-                           visNodes(shape = "dot") %>%
-                           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-                           visInteraction(navigationButtons = TRUE)%>%
-                           visIgraphLayout(layout = input$graph_layout)
-                       })
-                     },error = function(e){
-                       print("error 1")
-                       shinyalert(toString(e), type = "error")
-                       #output$netPlot<- renderForceNetwork({validate(e)})
-                     })
-                   }
-                 }
                }
+               inserted <<- c()
+               for(elem2 in 1:length(insertedV))
+               {
+                 removeUI(
+                   ## pass in appropriate div id
+                   selector = paste0('#', insertedV[elem2])
+                 )
+
+               }
+               insertedV <<- c()
+               rvs$evidence <<- c()
+               rvs$value <<- c()
+               rvs$evidenceObserve <<- c()
+               rvs$valueObserve <<- c()
+               output$distPlot <<- renderPlot(NULL)
+               NetworkGraph <<- data.frame(directed.arcs(bn.hc.boot.average))
+               nodeNames <<- names(bn.hc.boot.average$nodes)
+               EventNode <<- nodeNames[1]
+               EvidenceNode <<- c()
+               updateSelectInput(session,'event',choices = nodeNames)
+               networkData = NetworkGraph[,1:2]
+               selectedNodes <<- nodeNames
+               src <<- NetworkGraph$from
+               target <<- NetworkGraph$to
+               nodes <<- data.frame(name = nodeNames)
+               nodes$id <- 0:(nrow(nodes) - 1)
+               colnames(networkData) = c("src","target")
+               edges <- networkData %>%
+                 left_join(nodes, by = c("src" = "name")) %>%
+                 select(-src) %>%
+                 rename(source = id) %>%
+                 left_join(nodes, by = c("target" = "name")) %>%
+                 select(-target) %>%
+                 rename(target = id)
+
+               edges$width <- 1
+
+               nodes$group <- "not in use"
+               nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
+               nodes[which(nodes$name == EventNode),3] = "Event"
+               visNodes<- data.frame(id = selectedNodes,
+                                     label = selectedNodes,
+                                     group = nodes$group)
+               visEdges<- data.frame(from = NetworkGraph$from,
+                                     to = NetworkGraph$to)
+               output$netPlot<-renderVisNetwork({
+                 visNetwork(visNodes, visEdges, width = "200%") %>%
+                   visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+                   visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+                   visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+                   visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
+                   visLegend(width = 0.1, position = "left")%>%
+                   visNodes(shape = "dot") %>%
+                   visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+                   visInteraction(navigationButtons = TRUE)%>%
+                   visIgraphLayout(layout = input$graph_layout)
+               })
+             },error = function(e){
+               print("error 1")
+               shinyalert(toString(e), type = "error")
+               #output$netPlot<- renderForceNetwork({validate(e)})
+             })
+           }
+         }
+       }
   )
 
 
@@ -307,10 +309,10 @@ shinyServer(function(input, output,session) {
                             to = NetworkGraph$to)
       output$netPlot<-renderVisNetwork({
         visNetwork(visNodes, visEdges, width = "200%") %>%
-          visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-          visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-          visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-          visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
+          visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+          visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+          visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+          visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -446,10 +448,10 @@ shinyServer(function(input, output,session) {
                             to = NetworkGraph$to)
       output$netPlot<-renderVisNetwork({
         visNetwork(visNodes, visEdges, width = "200%") %>%
-          visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-          visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-          visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-          visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
+          visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+          visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+          visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+          visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -620,103 +622,6 @@ shinyServer(function(input, output,session) {
 
     })
   })
-  observeEvent(input$graph_layout,{
-    for(elem in inserted)
-    {
-      EvidenceNode = c(EvidenceNode,input[[elem]])
-    }
-    if(temp==1)
-    {
-      EventNode = nodeNames[1]
-      temp = temp + 1
-    }
-    else
-    {
-      EventNode = input$event
-    }
-
-    print(EventNode)
-    networkData <<- NetworkGraph[,1:2]
-    src <- NetworkGraph$from
-    target <- NetworkGraph$to
-    nodes <- data.frame(name = selectedNodes)
-    nodes$id <- 0:(nrow(nodes) - 1)
-    colnames(networkData) = c("src","target")
-    edges <- networkData %>%
-      left_join(nodes, by = c("src" = "name")) %>%
-      select(-src) %>%
-      rename(source = id) %>%
-      left_join(nodes, by = c("target" = "name")) %>%
-      select(-target) %>%
-      rename(target = id)
-
-    edges$width <- 1
-    nodes$group <- "not in use"
-    nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
-    nodes[which(nodes$name == EventNode),3] = "Event"
-    visNodes<- data.frame(id = selectedNodes,
-                          label = selectedNodes,
-                          group = nodes$group)
-    visEdges<- data.frame(from = NetworkGraph$from,
-                          to = NetworkGraph$to)
-    output$netPlot<-renderVisNetwork({
-      visNetwork(visNodes, visEdges, width = "200%") %>%
-        visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
-        visLegend(width = 0.1, position = "left")%>%
-        visNodes(shape = "dot") %>%
-        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-        visInteraction(navigationButtons = TRUE)%>%
-        visIgraphLayout(layout = input$graph_layout)
-    })
-  })
-  observeEvent(input$graphBtn,{
-    for(elem in inserted)
-    {
-      EvidenceNode = c(EvidenceNode,input[[elem]])
-    }
-    EventNode = input$event
-    networkData <<- NetworkGraph[,1:2]
-    src <- NetworkGraph$from
-    target <- NetworkGraph$to
-    nodes <- data.frame(name = selectedNodes)
-    nodes$id <- 0:(nrow(nodes) - 1)
-    colnames(networkData) = c("src","target")
-    edges <- networkData %>%
-      left_join(nodes, by = c("src" = "name")) %>%
-      select(-src) %>%
-      rename(source = id) %>%
-      left_join(nodes, by = c("target" = "name")) %>%
-      select(-target) %>%
-      rename(target = id)
-
-    edges$width <- 1
-    nodes$group <- "not in use"
-    nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
-    nodes[which(nodes$name == EventNode),3] = "Event"
-    visNodes<- data.frame(id = selectedNodes,
-                          label = selectedNodes,
-                          group = nodes$group)
-    visEdges<- data.frame(from = NetworkGraph$from,
-                          to = NetworkGraph$to)
-    output$netPlot<-renderVisNetwork({
-      visNetwork(visNodes, visEdges, width = "200%") %>%
-        visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
-        visLegend(width = 0.1, position = "left")%>%
-        visNodes(shape = "dot") %>%
-        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-        visInteraction(navigationButtons = TRUE)%>%
-        visIgraphLayout(layout = input$graph_layout)
-    })
-
-
-
-  })
   observeEvent(input$degree,{
     for(elem in inserted)
     {
@@ -758,10 +663,10 @@ shinyServer(function(input, output,session) {
                           to = NetworkGraph$to)
     output$netPlot<-renderVisNetwork({
       visNetwork(visNodes, visEdges, width = "200%") %>%
-        visEdges(arrows ="to",smooth = T,color = list(color = "black",highlight = "yellow",hover = "yellow"))%>%
-        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'yellow', hover = "yellow")) %>%
-        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "yellow", hover = "yellow"))%>%
-        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "yellow", hover = "yellow")) %>%
+        visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
         visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
@@ -770,4 +675,102 @@ shinyServer(function(input, output,session) {
     })
 
   })
+  observeEvent(input$graph_layout,{
+    for(elem in inserted)
+    {
+      EvidenceNode = c(EvidenceNode,input[[elem]])
+    }
+    if(temp==1)
+    {
+      EventNode = nodeNames[1]
+      temp = temp + 1
+    }
+    else
+    {
+      EventNode = input$event
+    }
+
+    print(EventNode)
+    networkData <<- NetworkGraph[,1:2]
+    src <- NetworkGraph$from
+    target <- NetworkGraph$to
+    nodes <- data.frame(name = selectedNodes)
+    nodes$id <- 0:(nrow(nodes) - 1)
+    colnames(networkData) = c("src","target")
+    edges <- networkData %>%
+      left_join(nodes, by = c("src" = "name")) %>%
+      select(-src) %>%
+      rename(source = id) %>%
+      left_join(nodes, by = c("target" = "name")) %>%
+      select(-target) %>%
+      rename(target = id)
+
+    edges$width <- 1
+    nodes$group <- "not in use"
+    nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
+    nodes[which(nodes$name == EventNode),3] = "Event"
+    visNodes<- data.frame(id = selectedNodes,
+                          label = selectedNodes,
+                          group = nodes$group)
+    visEdges<- data.frame(from = NetworkGraph$from,
+                          to = NetworkGraph$to)
+    output$netPlot<-renderVisNetwork({
+      visNetwork(visNodes, visEdges, width = "200%") %>%
+        visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
+        visLegend(width = 0.1, position = "left")%>%
+        visNodes(shape = "dot") %>%
+        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+        visInteraction(navigationButtons = TRUE)%>%
+        visIgraphLayout(layout = input$graph_layout)
+    })
+  })
+  observeEvent(input$graphBtn,{
+    for(elem in inserted)
+    {
+      EvidenceNode = c(EvidenceNode,input[[elem]])
+    }
+    EventNode = input$event
+    networkData <<- NetworkGraph[,1:2]
+    src <- NetworkGraph$from
+    target <- NetworkGraph$to
+    nodes <- data.frame(name = selectedNodes)
+    nodes$id <- 0:(nrow(nodes) - 1)
+    colnames(networkData) = c("src","target")
+    edges <- networkData %>%
+      left_join(nodes, by = c("src" = "name")) %>%
+      select(-src) %>%
+      rename(source = id) %>%
+      left_join(nodes, by = c("target" = "name")) %>%
+      select(-target) %>%
+      rename(target = id)
+
+    edges$width <- 1
+    nodes$group <- "not in use"
+    nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
+    nodes[which(nodes$name == EventNode),3] = "Event"
+    visNodes<- data.frame(id = selectedNodes,
+                          label = selectedNodes,
+                          group = nodes$group)
+    visEdges<- data.frame(from = NetworkGraph$from,
+                          to = NetworkGraph$to)
+    output$netPlot<-renderVisNetwork({
+      visNetwork(visNodes, visEdges, width = "200%") %>%
+        visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
+        visLegend(width = 0.1, position = "left")%>%
+        visNodes(shape = "dot") %>%
+        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+        visInteraction(navigationButtons = TRUE)%>%
+        visIgraphLayout(layout = input$graph_layout)
+    })
+
+
+
+  })
+
 })

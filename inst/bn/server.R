@@ -15,7 +15,7 @@ source('error.bar.R')
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
   temp<- 1
-  D = readRDS('a.RData')
+  D = get(load('a.RData'))
   DiscreteData <<- D
   bn.hc.boot <<- boot.strength(data = DiscreteData,R = 5,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")
   bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength > 0.5 & bn.hc.boot$direction >0.5,]
@@ -86,7 +86,7 @@ shinyServer(function(input, output,session) {
                      {
                        if(file_ext(inFile$datapath) == "RData")
                        {
-                         DiscreteData <<- readRDS(inFile$datapath)
+                         DiscreteData <<- get(load(inFile$datapath))
                        }
                        else
                        {
@@ -122,7 +122,7 @@ shinyServer(function(input, output,session) {
         tempDiscreteData <<- DiscreteData
         int <- sapply(tempDiscreteData,is.integer)
         tempDiscreteData[,int] <<- lapply(tempDiscreteData[,int], as.numeric)
-        temoDiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(tempDiscreteData),method=input$dtype))
+        tempDiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(tempDiscreteData),method=input$dtype))
         tempDiscreteData[,which(mapply(nlevels,tempDiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
         tempDiscreteData <<- droplevels(tempDiscreteData)
         print(tempDiscreteData)
@@ -170,7 +170,7 @@ shinyServer(function(input, output,session) {
                    else
                    {
                      tryCatch({
-                       bn.hc.boot.average <<- readRDS(inFile$datapath)
+                       bn.hc.boot.average <<- get(load(inFile$datapath))
                        #print("2")
                        bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
                        print("Learned Structure loaded")
@@ -619,7 +619,7 @@ shinyServer(function(input, output,session) {
   })
   observeEvent(input$saveBtn,{
     tryCatch({
-      saveRDS(bn.hc.boot.average,file = input$path)
+      save(bn.hc.boot.average,file = input$path)
 
     },error = function(e)
     {

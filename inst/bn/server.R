@@ -15,6 +15,7 @@ source('error.bar.R')
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
   temp<- 1
+  output$distPlot<- renderPlot(validate("Built infrence plot will be displayed here"))
   D = get(load('a.RData'))
   DiscreteData <<- D
   bn.hc.boot <<- boot.strength(data = DiscreteData,R = 5,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")

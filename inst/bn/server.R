@@ -138,8 +138,15 @@ shinyServer(function(input, output,session) {
   })
 
   observeEvent(input$impute,{
-    withProgress(message = "Imputing missing data", value = 0, {
+    tryCatch(
+    {withProgress(message = "Imputing missing data", value = 0, {
       DiscreteData <<- missRanger(DiscreteData,maxiter = 2)
+    })}, error = function(e){
+      print("error0")
+      print(toString(e))
+      type <- toString(input$dtype)
+      messageString <- "Error imputing missingness using missRanger method. Try uploading pre-imputed data."
+      shinyalert(messageString, type = "error")
     })
 
   })

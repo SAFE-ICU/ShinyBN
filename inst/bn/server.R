@@ -15,7 +15,7 @@ source('error.bar.R')
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
   temp<- 1
-  D = readRDS('a.RData')
+  D = readRDS('a.Rdata')
   DiscreteData <<- D
   bn.hc.boot <<- boot.strength(data = DiscreteData,R = 5,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")
   bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength > 0.5 & bn.hc.boot$direction >0.5,]
@@ -108,7 +108,7 @@ shinyServer(function(input, output,session) {
 
                    },error = function(e){
                      print("error0")
-                     shinyalert(toString(e), type = "error")
+                     shinyalert(c("Error in loading data: ",toString(e)), type = "error")
                    })
                    print("Data loaded")
                  }
@@ -117,19 +117,29 @@ shinyServer(function(input, output,session) {
                }
   )
   observeEvent(input$discretize,{
-    withProgress(message = "Discretizing data", value = 0, {
-      int<- sapply(DiscreteData,is.integer)
-      DiscreteData[,int] <<- lapply(DiscreteData[,int], as.numeric)
-      DiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(DiscreteData),method=input$dtype))
-      DiscreteData[,which(mapply(nlevels,DiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
-      DiscreteData <<- droplevels(DiscreteData)
-      print(DiscreteData)
+    tryCatch(
+      {withProgress(message = "Discretizing data", value = 0, {
+        tempDiscreteData <<- DiscreteData
+        int <- sapply(tempDiscreteData,is.integer)
+        tempDiscreteData[,int] <<- lapply(tempDiscreteData[,int], as.numeric)
+        temoDiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(tempDiscreteData),method=input$dtype))
+        tempDiscreteData[,which(mapply(nlevels,tempDiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
+        tempDiscreteData <<- droplevels(tempDiscreteData)
+        print(tempDiscreteData)
+        DiscreteData <<-tempDiscreteData
+      })},error = function(e){
+        print("error0")
+        print(toString(e))
+        type <- toString(input$dtype)
+        messageString <- paste(c("Error is discretising using method ", type, ". Try using other method or upload pre-discretised data."), collapse = '')
+        shinyalert(messageString, type = "error")
       })
+
   })
 
   observeEvent(input$impute,{
     withProgress(message = "Imputing missing data", value = 0, {
-      DiscreteData<<- missRanger(DiscreteData,maxiter = 1)
+      DiscreteData <<- missRanger(DiscreteData,maxiter = 2)
     })
 
   })
@@ -138,98 +148,98 @@ shinyServer(function(input, output,session) {
   # Get the data selection from user
   observeEvent(input$structFile,
 
-       {# Get the uploaded file from user
-         inFile <- input$structFile
-         if (is.null(inFile))
-         {
-           print("Structure File is empty")
-         }
-         else
-         {
-           if(is.null(DiscreteData))
-           {
-             print("Please Upload Data File First")
-           }
-           else
-           {
-             tryCatch({
-               bn.hc.boot.average <<- readRDS(inFile$datapath)
-               #print("2")
-               bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
-               print("Learned Structure loaded")
-               for(elem in 1:length(inserted))
-               {
-                 removeUI(
-                   ## pass in appropriate div id
-                   selector = paste0('#', inserted[elem])
-                 )
+               {# Get the uploaded file from user
+                 inFile <- input$structFile
+                 if (is.null(inFile))
+                 {
+                   print("Structure File is empty")
+                 }
+                 else
+                 {
+                   if(is.null(DiscreteData))
+                   {
+                     print("Please Upload Data File First")
+                   }
+                   else
+                   {
+                     tryCatch({
+                       bn.hc.boot.average <<- readRDS(inFile$datapath)
+                       #print("2")
+                       bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
+                       print("Learned Structure loaded")
+                       for(elem in 1:length(inserted))
+                       {
+                         removeUI(
+                           ## pass in appropriate div id
+                           selector = paste0('#', inserted[elem])
+                         )
 
+                       }
+                       inserted <<- c()
+                       for(elem2 in 1:length(insertedV))
+                       {
+                         removeUI(
+                           ## pass in appropriate div id
+                           selector = paste0('#', insertedV[elem2])
+                         )
+
+                       }
+                       insertedV <<- c()
+                       rvs$evidence <<- c()
+                       rvs$value <<- c()
+                       rvs$evidenceObserve <<- c()
+                       rvs$valueObserve <<- c()
+                       output$distPlot <<- renderPlot(NULL)
+                       NetworkGraph <<- data.frame(directed.arcs(bn.hc.boot.average))
+                       nodeNames <<- names(bn.hc.boot.average$nodes)
+                       EventNode <<- nodeNames[1]
+                       EvidenceNode <<- c()
+                       updateSelectInput(session,'event',choices = nodeNames)
+                       networkData = NetworkGraph[,1:2]
+                       selectedNodes <<- nodeNames
+                       src <<- NetworkGraph$from
+                       target <<- NetworkGraph$to
+                       nodes <<- data.frame(name = nodeNames)
+                       nodes$id <- 0:(nrow(nodes) - 1)
+                       colnames(networkData) = c("src","target")
+                       edges <- networkData %>%
+                         left_join(nodes, by = c("src" = "name")) %>%
+                         select(-src) %>%
+                         rename(source = id) %>%
+                         left_join(nodes, by = c("target" = "name")) %>%
+                         select(-target) %>%
+                         rename(target = id)
+
+                       edges$width <- 1
+
+                       nodes$group <- "not in use"
+                       nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
+                       nodes[which(nodes$name == EventNode),3] = "Event"
+                       visNodes<- data.frame(id = selectedNodes,
+                                             label = selectedNodes,
+                                             group = nodes$group)
+                       visEdges<- data.frame(from = NetworkGraph$from,
+                                             to = NetworkGraph$to)
+                       output$netPlot<-renderVisNetwork({
+                         visNetwork(visNodes, visEdges, width = "200%") %>%
+                           visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+                           visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+                           visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+                           visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
+                           visLegend(width = 0.1, position = "left")%>%
+                           visNodes(shape = "dot") %>%
+                           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+                           visInteraction(navigationButtons = TRUE)%>%
+                           visIgraphLayout(layout = input$graph_layout)
+                       })
+                     },error = function(e){
+                       print("error 1")
+                       shinyalert(toString(e), type = "error")
+                       #output$netPlot<- renderForceNetwork({validate(e)})
+                     })
+                   }
+                 }
                }
-               inserted <<- c()
-               for(elem2 in 1:length(insertedV))
-               {
-                 removeUI(
-                   ## pass in appropriate div id
-                   selector = paste0('#', insertedV[elem2])
-                 )
-
-               }
-               insertedV <<- c()
-               rvs$evidence <<- c()
-               rvs$value <<- c()
-               rvs$evidenceObserve <<- c()
-               rvs$valueObserve <<- c()
-               output$distPlot <<- renderPlot(NULL)
-               NetworkGraph <<- data.frame(directed.arcs(bn.hc.boot.average))
-               nodeNames <<- names(bn.hc.boot.average$nodes)
-               EventNode <<- nodeNames[1]
-               EvidenceNode <<- c()
-               updateSelectInput(session,'event',choices = nodeNames)
-               networkData = NetworkGraph[,1:2]
-               selectedNodes <<- nodeNames
-               src <<- NetworkGraph$from
-               target <<- NetworkGraph$to
-               nodes <<- data.frame(name = nodeNames)
-               nodes$id <- 0:(nrow(nodes) - 1)
-               colnames(networkData) = c("src","target")
-               edges <- networkData %>%
-                 left_join(nodes, by = c("src" = "name")) %>%
-                 select(-src) %>%
-                 rename(source = id) %>%
-                 left_join(nodes, by = c("target" = "name")) %>%
-                 select(-target) %>%
-                 rename(target = id)
-
-               edges$width <- 1
-
-               nodes$group <- "not in use"
-               nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
-               nodes[which(nodes$name == EventNode),3] = "Event"
-               visNodes<- data.frame(id = selectedNodes,
-                                     label = selectedNodes,
-                                     group = nodes$group)
-               visEdges<- data.frame(from = NetworkGraph$from,
-                                     to = NetworkGraph$to)
-               output$netPlot<-renderVisNetwork({
-                 visNetwork(visNodes, visEdges, width = "200%") %>%
-                   visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
-                   visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
-                   visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
-                   visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
-                   visLegend(width = 0.1, position = "left")%>%
-                   visNodes(shape = "dot") %>%
-                   visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
-                   visInteraction(navigationButtons = TRUE)%>%
-                   visIgraphLayout(layout = input$graph_layout)
-               })
-             },error = function(e){
-               print("error 1")
-               shinyalert(toString(e), type = "error")
-               #output$netPlot<- renderForceNetwork({validate(e)})
-             })
-           }
-         }
-       }
   )
 
 
@@ -584,13 +594,13 @@ shinyServer(function(input, output,session) {
       output$distPlot = renderPlot({par(mar=c(5,3,3,3))
         par(oma=c(5,3,3,3))
         barx <-barplot(ee$mean,
-                col = "lightblue",
-                main = "Conditional Probabilities",
-                border = NA,
-                xlab = "",
-                ylab = "Probabilities",
-                ylim = c(0,1),
-                las=2)
+                       col = "lightblue",
+                       main = "Conditional Probabilities",
+                       border = NA,
+                       xlab = "",
+                       ylab = "Probabilities",
+                       ylim = c(0,1),
+                       las=2)
         error.bar(barx,ee$mean, 1.96*ee$sd/sqrt(input$plotStrengthBtn))})
 
     },error = function(e){
@@ -605,8 +615,8 @@ shinyServer(function(input, output,session) {
       saveRDS(bn.hc.boot.average,file = input$path)
 
     },error = function(e)
-      {
-        print(e)
+    {
+      print(e)
 
     })
 

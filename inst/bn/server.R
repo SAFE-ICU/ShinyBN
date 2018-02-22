@@ -15,7 +15,7 @@ source('error.bar.R')
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
   temp<- 1
-  D = readRDS('a.Rdata')
+  D = readRDS('a.RData')
   DiscreteData <<- D
   bn.hc.boot <<- boot.strength(data = DiscreteData,R = 5,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")
   bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength > 0.5 & bn.hc.boot$direction >0.5,]

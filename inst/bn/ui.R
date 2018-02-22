@@ -11,18 +11,19 @@ library('tools')
 library('shinyalert')
 library('shinycssloaders')
 source('error.bar.R')
+library('shinythemes')
 
 
 dashboardPage(skin = "blue",
               dashboardHeader(title = "Bayesian Networks",
-                              titleWidth = 240
+                              titleWidth = 200
               ),
-              dashboardSidebar(width = 240,
+              dashboardSidebar(width = 200,
                                sidebarMenu(id = "sidebarMenu",
                                            collapsed = T,
-                                           menuItem("Home",
-                                                    tabName = "home",
-                                                    icon = icon("home")
+                                           menuItem("About",
+                                                    tabName = "About",
+                                                    icon = icon("info")
                                            ),
                                            menuItem("Structure & Inference",
                                                     icon = shiny::icon("globe"),
@@ -32,11 +33,15 @@ dashboardPage(skin = "blue",
               ),
               dashboardBody(id ="dashboardBody",
                             useShinyalert(),
+                            #shinythemes::themeSelector(),
+                            theme = shinytheme("united"),
+                            tags$script(HTML("$('body').addClass('fixed');")),
                             shinydashboard::tabItems(
-                              shinydashboard::tabItem(tabName = "home",
+                            shinydashboard::tabItem(tabName = "About",
                                                       fluidRow(box(title = "About the App",
                                                                    status = "primary",
                                                                    width = 12,
+                                                                   div(style = 'overflow-y: scroll'),
                                                                    shiny::h4("Note*: The Demo version of the app is running for the Iris data set freely available in R"),
                                                                    shiny::h1("Features"),
                                                                    shiny::h3("Structure Part"),

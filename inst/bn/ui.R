@@ -97,9 +97,7 @@ dashboardPage(skin = "blue",
                                                                           shiny::fileInput('dataFile',
                                                                                            strong('File Input:'),
                                                                                            accept = c('.RData','.csv')
-                                                                                           )
-                                                                          ),
-                                                                 tabPanel("EDA",
+                                                                                           ),
                                                                           shiny::helpText("Impute Missing Data"),
                                                                           actionButton('impute','impute missingess'),
                                                                           shiny::helpText('Discretize Data'),

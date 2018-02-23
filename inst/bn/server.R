@@ -15,7 +15,7 @@ source('error.bar.R')
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
   temp<- 1
-  output$distPlot<- renderPlot(validate("Built infrence plot will be displayed here"))
+  output$distPlot<- renderPlot(validate("Built infrence plot will be displayed"))
   D = get(load('a.RData'))
   DiscreteData <<- D
   bn.hc.boot <<- boot.strength(data = DiscreteData,R = 5,m =ceiling(nrow(DiscreteData)*0.7) ,algorithm = "hc")
@@ -87,7 +87,13 @@ shinyServer(function(input, output,session) {
                      {
                        if(file_ext(inFile$datapath) == "RData")
                        {
-                         DiscreteData <<- get(load(inFile$datapath))
+                         tryCatch({
+                           DiscreteData <<- get(load(inFile$datapath))
+
+                         },error = function(e){
+                           DiscreteData<<- readRDS(inFile$datapath)
+                         })
+
                        }
                        else
                        {
@@ -171,7 +177,12 @@ shinyServer(function(input, output,session) {
                    else
                    {
                      tryCatch({
-                       bn.hc.boot.average <<- get(load(inFile$datapath))
+                       tryCatch({
+                         bn.hc.boot.average <<- get(load(inFile$datapath))
+                       },error = function(e){
+                         bn.hc.boot.average <<- readRDS(inFile$datapath)
+                       })
+
                        #print("2")
                        bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
                        print("Learned Structure loaded")

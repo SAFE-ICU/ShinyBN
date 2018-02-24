@@ -11,6 +11,7 @@ library('tools')
 library('shinyalert')
 library('shinycssloaders')
 source('error.bar.R')
+library('rintrojs')
 
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
@@ -65,10 +66,16 @@ shinyServer(function(input, output,session) {
       visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
       visLegend(width = 0.1, position = "left")%>%
       visNodes(shape = "dot") %>%
-      visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+      visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                   list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
       visInteraction(navigationButtons = TRUE)%>%
       visIgraphLayout(layout = input$graph_layout)
   })
+
+  observeEvent(input$start, {
+    updateTabItems(session, "sidebarMenu", "Structure")
+  }
+  )
 
   # Get the data selection from user
   observeEvent(input$dataFile,
@@ -247,7 +254,8 @@ shinyServer(function(input, output,session) {
                            visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
                            visLegend(width = 0.1, position = "left")%>%
                            visNodes(shape = "dot") %>%
-                           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+                           visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                                        list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
                            visInteraction(navigationButtons = TRUE)%>%
                            visIgraphLayout(layout = input$graph_layout)
                        })
@@ -344,7 +352,8 @@ shinyServer(function(input, output,session) {
           visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
-          visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+          visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                       list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
           visInteraction(navigationButtons = TRUE)%>%
           visIgraphLayout(layout = input$graph_layout)
       })
@@ -483,7 +492,8 @@ shinyServer(function(input, output,session) {
           visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
           visLegend(width = 0.1, position = "left")%>%
           visNodes(shape = "dot") %>%
-          visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+          visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                       list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
           visInteraction(navigationButtons = TRUE)%>%
           visIgraphLayout(layout = input$graph_layout)
       })
@@ -640,6 +650,17 @@ shinyServer(function(input, output,session) {
     })
 
   })
+  observeEvent(input$secondSaveBtn,{
+    tryCatch({
+      save(bn.hc.boot.average,file = input$path)
+
+    },error = function(e)
+    {
+      print(e)
+
+    })
+
+  })
   observeEvent(input$saveBtn2,{
     tryCatch({
       write.csv(NetworkGraph,file = input$path2,row.names = FALSE)
@@ -698,7 +719,8 @@ shinyServer(function(input, output,session) {
         visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
-        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                     list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
         visInteraction(navigationButtons = TRUE)%>%
         visIgraphLayout(layout = input$graph_layout)
     })
@@ -749,9 +771,10 @@ shinyServer(function(input, output,session) {
         visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
         visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
         visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
-        visLegend(width = 0.1, position = "left")%>%
+        visLegend(width = 0.1, position = "left") %>%
         visNodes(shape = "dot") %>%
-        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+        visOptions(highlightNearest = list(enabled = TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+        list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
         visInteraction(navigationButtons = TRUE)%>%
         visIgraphLayout(layout = input$graph_layout)
     })
@@ -793,7 +816,8 @@ shinyServer(function(input, output,session) {
         visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
         visLegend(width = 0.1, position = "left")%>%
         visNodes(shape = "dot") %>%
-        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection = TRUE)%>%
+        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                     list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
         visInteraction(navigationButtons = TRUE)%>%
         visIgraphLayout(layout = input$graph_layout)
     })
@@ -801,5 +825,72 @@ shinyServer(function(input, output,session) {
 
 
   })
+  observeEvent(input$secondGraphBtn,{
+    for(elem in inserted)
+    {
+      EvidenceNode = c(EvidenceNode,input[[elem]])
+    }
+    EventNode = input$event
+    networkData <<- NetworkGraph[,1:2]
+    src <- NetworkGraph$from
+    target <- NetworkGraph$to
+    nodes <- data.frame(name = selectedNodes)
+    nodes$id <- 0:(nrow(nodes) - 1)
+    colnames(networkData) = c("src","target")
+    edges <- networkData %>%
+      left_join(nodes, by = c("src" = "name")) %>%
+      select(-src) %>%
+      rename(source = id) %>%
+      left_join(nodes, by = c("target" = "name")) %>%
+      select(-target) %>%
+      rename(target = id)
+
+    edges$width <- 1
+    nodes$group <- "not in use"
+    nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
+    nodes[which(nodes$name == EventNode),3] = "Event"
+    visNodes<- data.frame(id = selectedNodes,
+                          label = selectedNodes,
+                          group = nodes$group)
+    visEdges<- data.frame(from = NetworkGraph$from,
+                          to = NetworkGraph$to)
+    output$netPlot<-renderVisNetwork({
+      visNetwork(visNodes, visEdges, width = "200%") %>%
+        visEdges(arrows ="to",smooth = T,color = list(color = "grey",highlight = "black",hover = "black"))%>%
+        visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
+        visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
+        visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
+        visLegend(width = 0.1, position = "left")%>%
+        visNodes(shape = "dot") %>%
+        visOptions(highlightNearest = list(enabled =TRUE, degree = input$degree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
+                     list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
+        visInteraction(navigationButtons = TRUE)%>%
+        visIgraphLayout(layout = input$graph_layout)
+    })
+
+
+
+  })
+
+  #homeIntroduction Event
+  observeEvent(input$homeIntro,
+               {
+                  print(input$sidebarMenu)
+                  if(input$sidebarMenu == "Home")
+                  {introjs(session, options = list(steps = homeHelp))}
+                  else if(input$sidebarMenu == "Structure")
+                  {
+                    print(input$control_tabs)
+                    if(input$control_tabs == "Data")
+                    {
+                      introjs(session, options = list(steps = dataHelp))
+                    }
+                    else if(input$control_tabs == "Graph")
+                    introjs(session, options = list(steps = graphHelp))
+
+                  }
+
+               }
+  )
 
 })

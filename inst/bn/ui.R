@@ -12,6 +12,8 @@ library('shinyalert')
 library('shinycssloaders')
 source('error.bar.R')
 library('shinythemes')
+library('shinyBS')
+library(rintrojs)
 
 
 myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
@@ -35,55 +37,67 @@ myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = F
 
 dashboardPage(skin = "blue",
               myDashboardHeader(title = "ShinyBN",
-                                titleWidth = "400"
-
+                                titleWidth = "400",
+                                tags$li(class = "dropdown", bsButton("homeIntro", label = NULL, icon = icon("question-circle", lib="font-awesome"), style = "primary", size = "large")),
+                                tags$li(class = "dropdown", bsButton("homeIntro", label = NULL, icon = icon("info"), style = "primary", size = "large"))
               ),
-              dashboardSidebar(width = 40,
+              dashboardSidebar(width = 50,
                                sidebarMenu(id = "sidebarMenu",
                                            menuItem(text = "",
-                                                    tabName = "About",
-                                                    icon = icon("info")
+                                                    tabName = "Home",
+                                                    icon = icon("home")
                                            ),
                                            menuItem(text = "",
                                                     icon = shiny::icon("globe"),
-                                                    tabName = "structure"
-                                           )
-
-
-                               )
-              ),
+                                                    tabName = "Structure"
+                                           ),
+                                           menuItem(text = "",
+                                                    icon = shiny::icon("github"),
+                                                    href = "https://github.com/SAFE-ICU/ShinyBN"),
+                                         menuItem(text = "",
+                                                  icon = shiny::icon("info"),
+                                                  tabName = "About"))
+                               ),
               dashboardBody(id ="dashboardBody",
-                            tags$head(tags$link(rel = "stylesheet",type = "text/css", href = "style.css")),
+                            # Include shinyalert Ui
                             useShinyalert(),
+                            # Include introjs UI
+                            rintrojs::introjsUI(),
                             #shinythemes::themeSelector(),
                             #theme = shinytheme("united"),
                             tags$script(HTML("$('body').addClass('fixed');")),
                             shinydashboard::tabItems(
-                            shinydashboard::tabItem(tabName = "About",
+                            shinydashboard::tabItem(tabName = "Home",
                                                       fluidRow(box(#title = "",
                                                                    status = "primary",
                                                                    width = 12,
-                                                                   div(style = 'overflow-y: scroll'),
-                                                                   #shiny::h4("Note*: The Demo version of the app is running for the Iris data set freely available in R"),
-                                                                   shiny::h1("ShinyBN"),
-                                                                   shiny::h3("Bayesian Network Modelling and Inferencing"),
-                                                                   shiny::h5("ShinyBN is a ",
-                                                                            shiny::a(href = 'https://rstudio.github.io/shinydashboard/', 'shinydashboard'),
-                                                                            " for Bayesian network modeling and inferencing, ",
-                                                                            "powered by",
-                                                                             shiny::a(href = 'http://www.bnlearn.com', 'bnlearn'),
-                                                                             'and',
-                                                                             shiny::a(href = 'http://datastorm-open.github.io/visNetwork/', 'visNetwork'),
-                                                                             '.'
+                                                                   div(style="text-align:center",
+                                                                       shiny::img(src = "placeholder-logo.png",height = 110,width = 110),
+                                                                       shiny::h1("ShinyBN"),
+                                                                       shiny::h2("Democratizing Bayesian Networks for Data Driven Decisions")
                                                                    ),
-                                                                   shiny::h5('This app is a more general version of the ',
-                                                                             shiny::a(href = 'https://github.com/paulgovan/BayesianNetwork', 'BayesianNetwork'),
-                                                                             'web app.')
-
+                                                                   br(),
+                                                                   hr(),
+                                                                   fluidRow(
+                                                                     style = "margin-left:40px;padding:10px;",
+                                                                     column(width=3, align = "center", h4('Learn Knowledge Network')),
+                                                                     column(width=1, align = "center", img(src = "arrow.png",height = 40,width = 60)),
+                                                                     column(width=3, align = "center", h4('Engineer and Assess Insights')),
+                                                                     column(width=1, align = "center", img(src = "arrow.png",height = 40,width = 60)),
+                                                                     column(width=3, align = "center", h4('Take Decisions'))
+                                                                   ),
+                                                                   hr(),
+                                                                   div(style="text-align:center",
+                                                                       actionButton("start", "Start Here", style  = "background-color:#2E86C1;color:white;height:50px;font-size:20px", width = '300px', align = "center")
                                                                    )
+
+
+
                                                                )
-                                                      ),
-                              shinydashboard::tabItem(tabName = "structure",
+
+                                                      )),
+                              shinydashboard::tabItem(
+                                                      tabName = "Structure",
                                                       shiny::fluidRow(
                                                         shiny::column(
                                                           width = 3,
@@ -91,36 +105,57 @@ dashboardPage(skin = "blue",
                                                           style='padding:0px;margin:0px',
                                                           tabBox(width=12,id="control_tabs",
                                                                  tabPanel("Data",
-                                                                          shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
-                                                                          shiny::selectInput('format','Data Format',c(".RData",".CSV")),
-                                                                          shiny::helpText("Upload your data:"),
-                                                                          shiny::fileInput('dataFile',
-                                                                                           strong('File Input:'),
-                                                                                           accept = c('.RData','.csv')
-                                                                                           ),
-                                                                          shiny::helpText("Impute Missing Data"),
-                                                                          actionButton('impute','impute missingess'),
-                                                                          shiny::helpText('Discretize Data'),
-                                                                          shiny::selectInput('dtype','Discretization Type',c("interval", "quantile")),
+                                                                          div(id = "data",
+                                                                          div(id = "dataFormat",
+                                                                            shiny::h4("Upload Data:"),
+                                                                            shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
+                                                                            h5('Data Format:'),
+                                                                            shiny::selectInput('format',label = NULL,c(".RData",".CSV")),
+                                                                            h5('File Input:'),
+                                                                            shiny::fileInput('dataFile',
+                                                                                             label = NULL,
+                                                                                             accept = c('.RData','.csv')
+                                                                                             )),
+                                                                          hr(),
+                                                                          div(id="dataImpute",
+                                                                          shiny::h4("Impute Missing Data:"),
+                                                                          actionButton('impute','Impute')),
+                                                                          hr(),
+                                                                          div(id="dataDiscretize",
+                                                                          shiny::h4('Discretize Data'),
+                                                                          h5('Discretization Type:'),
+                                                                          shiny::selectInput('dtype',label = NULL,c("interval", "quantile")),
                                                                           actionButton('discretize',"Discretize")
-                                                                          ),
+                                                                          ))),
                                                                  tabPanel("Graph",
-                                                                          status = "primary",
-                                                                          helpText("update graph to view selected chain of inference"),
-
-                                                                          shiny::fluidRow(shiny::column(12,actionButton('graphBtn', 'Update Graph'))),
-                                                                          sliderInput("degree", "chain of neighbors",
-                                                                                      min = 1, max = 5,
-                                                                                      value = 2
-                                                                                      ),
-                                                                          shiny::selectInput('graph_layout','Layout',"layout_nicely"),
-                                                                          shiny::helpText("Save your network graph"),
-                                                                          actionButton('saveBtn2','Save Graph'),
-                                                                          textInput('path2','Enter Directory with file Name', value = "file type .csv", width = NULL, placeholder = NULL)
-                                                                          ),
+                                                                          #status = "primary",
+                                                                          div(id="graph",
+                                                                          div(id = "graphUpdate",
+                                                                            h4("Update Graph"),
+                                                                            shiny::fluidRow(shiny::column(12,actionButton('graphBtn', 'Update')))),
+                                                                          hr(),
+                                                                          div(id = "graphChain",
+                                                                            h4("Chain of Neighbours"),
+                                                                            sliderInput("degree", label = NULL,
+                                                                                        min = 1, max = 5,
+                                                                                        value = 2
+                                                                                        )),
+                                                                          hr(),
+                                                                          div(id="graphLayout",
+                                                                            h4("Select Layout"),
+                                                                            shiny::selectInput('graph_layout',label = NULL,"layout_nicely")),
+                                                                          hr(),
+                                                                          div(id="graphSave",
+                                                                            h4("Save Network Graph"),
+                                                                            actionButton('saveBtn2','Save'),
+                                                                            h5('Enter Directory with file Name:'),
+                                                                            textInput('path2',label = NULL, value = "file type .csv", width = NULL, placeholder = NULL))
+                                                                          )),
                                                                  tabPanel("Learning",
                                                                           status = "primary",
-                                                                          shiny::helpText("Learn structure or upload learned structure"),
+
+
+                                                                          shiny::h4("Structure"),
                                                                           shinyWidgets::radioGroupButtons(inputId = "net",
                                                                                                           choices = c("Learn Structure" = 2,
                                                                                                                       "Upload Structure" = 1),
@@ -130,7 +165,9 @@ dashboardPage(skin = "blue",
 
                                                                           # Conditional panel for uploading structure
                                                                           shiny::conditionalPanel(
+
                                                                             condition = "input.net == 1",
+                                                                            div(style ='overflow-y:scroll',
                                                                             # File input
                                                                             shiny::p("Note: Upload .RData file"),
                                                                             shiny::fileInput(
@@ -138,12 +175,14 @@ dashboardPage(skin = "blue",
                                                                               strong('File Input:'),
                                                                               accept = c('.RData')
                                                                             )
-                                                                          ),
+                                                                          )),
+                                                                          hr(),
 
                                                                           # Conditional panel for learning structure
                                                                           shiny::conditionalPanel(
                                                                             condition = "input.net == 2",
-                                                                            shiny::helpText("Select a structural learning algorithm:"),
+                                                                            div(style ='overflow-y:scroll;height:600px;padding-right:20px;',
+                                                                            shiny::h4("Structural learning"),
                                                                             # Structural learning algorithm input select
                                                                             shiny::selectizeInput(
                                                                               inputId = "alg",
@@ -170,47 +209,60 @@ dashboardPage(skin = "blue",
                                                                                   )
                                                                               )
                                                                             ),
-                                                                            sliderInput("boot", "Bootstrap replicates",
+                                                                            hr(),
+                                                                            h5("Bootstrap replicates"),
+                                                                            sliderInput("boot", label = NULL,
                                                                                         min = 1, max = 1000,
                                                                                         value = 10),
-                                                                            sliderInput("SampleSize", "Proportion of sample for Bootstrap:",
+                                                                            hr(),
+                                                                            h5("Proportion of sample for Bootstrap:"),
+                                                                            sliderInput("SampleSize", label = NULL,
                                                                                         min = 0, max = 1,
                                                                                         value = 0.7),
-                                                                            sliderInput("edgeStrength", "Edge Strength",
+                                                                            hr(),
+                                                                            h5("Edge Strength"),
+                                                                            sliderInput("edgeStrength", label = NULL,
                                                                                         min = 0, max = 1,
                                                                                         value = 0.5),
-                                                                            sliderInput("directionStrength", "Direction Confidence:",
+                                                                            hr(),
+                                                                            h5("Direction Confidence:"),
+                                                                            sliderInput("directionStrength", label = NULL,
                                                                                         min = 0, max = 1,
                                                                                         value = 0.5),
 
 
                                                                             actionButton('learnBtn', 'Learn'),
                                                                             actionButton('learnSBtn','Learn simple'),
-                                                                            shiny::helpText("Save your learned structure to save time"),
-                                                                            actionButton('saveBtn','Save Structure'),
+                                                                            hr(),
+                                                                            shiny::h5("Save learned structure"),
+                                                                            actionButton('saveBtn','Save'),
                                                                             textInput('path','Enter Directory with file Name', value = "file type .RData", width = NULL, placeholder = NULL)
 
-                                                                          )
+                                                                          ))
                                                                  ),
                                                                  tabPanel("Inference",
                                                                           status = "primary",
-                                                                          shiny::helpText("Display plot in inferece plot tab"),
+                                                                          shiny::h4("Display inference plot"),
                                                                           shiny::fluidRow(shiny::column(3,actionButton('plotBtn', 'Simple')),shiny::column(4,actionButton('plotStrengthBtn', 'Confidence'))),
-                                                                          shiny::helpText("No, of iterations run for confidence plot"),
-                                                                          sliderInput("numInterval", "No. of confidence intervals",
+                                                                          hr(),
+                                                                          shiny::h4("No of iterations for confidence plot"),
+                                                                          sliderInput("numInterval", label = NULL,
                                                                                       min = 1, max = 500,
                                                                                       value = 25
                                                                           ),
-                                                                          helpText("Select evidence to add to the model:"),
+                                                                          hr(),
+                                                                          h4("Select evidence to add to the model"),
                                                                           shiny::fluidRow(shiny::column(6,actionButton('insertBtn', 'Insert')),
                                                                                           shiny::column(6,actionButton('removeBtn', 'Remove'))
                                                                           ),
                                                                           shiny::fluidRow(shiny::column(6,tags$div(id = 'placeholder1')),
                                                                                           shiny::column(6,tags$div(id = 'placeholder2'))
                                                                           ),
-                                                                          helpText("Select an event of interest:"),
+                                                                          hr(),
+                                                                          h4("Select an event of interest"),
+                                                                          shiny::h5("Event Node:"),
                                                                           shiny::selectInput("event",
-                                                                                             label = shiny::h5("Event Node:"),
+                                                                                             label = NULL,
                                                                                              "")
                                                                           )
 
@@ -226,15 +278,100 @@ dashboardPage(skin = "blue",
                                                                  width = 12,
 
                                                                  tabPanel("Network Graph",
-                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px")), color= "#ff69b4"),
+
+                                                                          div(style = "position:absolute;right:1em;margin-right:10px;",
+                                                                              bsButton('secondGraphBtn', '', icon = icon("refresh"),style = "default"),
+                                                                              bsButton('secondSaveBtn', '', icon = icon("save"),style="default")
+
+                                                                          ),
+
+                                                                          bsPopover('secondGraphBtn', trigger = "hover", title = "Update", content = "Reloads the network graph", placement = "left", options = list(container = "body")),
+                                                                          bsPopover('secondSaveBtn', trigger = "hover", title = "Save",
+                                                                                    content = "Saves graph to XYZ file. Go to Graph tab for more options",
+                                                                                    placement = "bottom", options = list(container = "body")),
+                                                                          br(),
+                                                                          withSpinner(visNetworkOutput("netPlot",height = "600px"), color= "#2E86C1")
+                                                                         ),
+
                                                                  tabPanel("Inference Plot",
-                                                                          withSpinner(plotOutput("distPlot",height = "600px")), color="#ff69b4")
+                                                                          withSpinner(plotOutput("distPlot",height = "600px")), color="#2E86C1")
                                                                  )
                                                           )
 
                                                       )
-                              )
+                              ),
+                              tabItem(tabName = "About",
+                                      fluidRow(box(
+                                        status = "primary",
+                                        width = 12,
+                                        div(style="text-align:center",
+                                            h1('Creators')
+                                        ),
+                                        fluidRow(
+                                          style = "margin-left:50px;padding:10px;",
+                                          column(width=3, align = "center",
+                                                 img(src = "shubham.jpg",style = "max-width: 50%; width: 50%; height: auto"),
+                                                 h4('Shubham Maheshwari'),
+                                                 h5('Data Scientist, Stockroom.io'),
+                                                 h5('B.Tech Computer Science, IIIT-Delhi'),
 
+
+                                                 fluidRow(width = 12,
+                                                   column(width=3, a(img(src = "github.png", width = '30px', height = '30px'), href = "https://github.com/shubham14101"),target = "_blank"),
+                                                   column(width=3, a(img(src = "facebook.png", style = "margin:5px; width: 20px; height: 20px"), href = "https://www.facebook.com/shubham.maheshwari3"),target = "_blank"),
+                                                   column(width=3, a(img(src = "linkedin.png", style = "margin:5px; width: 20px; height: 20px"), href = "https://www.linkedin.com/in/shubham-maheshwari-93a35b108/"),target = "_blank"),
+                                                   column(width=3, a(img(src = "twitter.png", style = "margin:6px; width: 18px; height: 18px"), href = "https://twitter.com/real_SM96"),target = "_blank")
+                                                 )),
+                                          column(width=1, align = "center", img(src = "vertical-line.png",style = "max-width: 100%; width: 100%; height: 100%;")),
+                                          column(width=3, align = "center",
+                                                 img(src = "anant.jpg", style = "max-width: 50%; width: 50%; height: auto"),
+                                                 h4('Anant Mittal'),
+                                                 h5('Data Scientist, Egregore Labs'),
+                                                 h5('B.Tech Computer Science, IIIT-Delhi'),
+
+
+                                                 fluidRow(width = 12,
+                                                          column(width=3, a(img(src = "github.png", width = '30px', height = '30px'), href = "https://github.com/anant15"), target = "_blank"),
+                                                          column(width=3, a(img(src = "facebook.png", style = "margin:5px; width: 20px; height: 20px"), href = "https://www.facebook.com/shubham.maheshwari3"), target = "_blank"),
+                                                          column(width=3, a(img(src = "linkedin.png", style = "margin:5px; width: 20px; height: 20px"), href = "https://www.linkedin.com/in/shubham-maheshwari-93a35b108/"), target = "_blank"),
+                                                          column(width=3, a(img(src = "twitter.png", style = "margin:6px; width: 18px; height: 18px"), href = "https://twitter.com/real_SM96"),target = "_blank")
+                                                 )),
+                                          column(width=1, align = "center", img(src = "vertical-line.png",style = "max-width: 100%; width: 100%; height: auto;")),
+                                          column(width=3, align = "center",
+                                                 img(src = "tps.jpg", style = "max-width: 50%; width: 50%; height: auto;"),
+                                                 h4('Tavpritesh Sethi'),
+                                                 h5('Assistant Professor, IIIT-Delhi'),
+                                                 h5('Visiting Assistant Professor, Stanford Medicine'),
+
+                                                 fluidRow(width = 12,
+                                                          column(width=3, a(img(src = "github.png", width = '30px', height = '30px'), href = "https://github.com/SAFE-ICU?tab=repositories"), target = "_blank"),
+                                                          column(width=3, a(img(src = "facebook.png", style = "margin:5px; width: 20px; height: 20px"), href = "https://www.facebook.com/tavpritesh.sethi"), target = "_blank"),
+                                                          column(width=3, a(img(src = "linkedin.png", style = "margin:5px; width: 20px; height: 20px"), href = "https://in.linkedin.com/in/tavpritesh"), target = "_blank"),
+                                                          column(width=3, a(img(src = "twitter.png", style = "margin:6px; width: 18px; height: 18px"), href = "https://twitter.com/tavpritesh"), target = "_blank")
+                                                 ))
+                                        ),
+                                        hr(),
+                                        div(style="text-align:center",
+                                            h4("ShinyBN: Democratizing Bayesian Network Analysis in Complex Multivariate Data (submitted)"),
+                                            hr(),
+                                            h4("Acknowledgements - We acknowledge the useful inputs provided
+                                               by Prof. Rakesh Lodha, Professor, All India Institute of Medical Sciences, New Delhi, India")
+                                        )
+
+
+                                      )
+
+                                      )
+                                    )
+),
+tags$footer("Funding Support: The Wellcome Trust/DBT India Alliance grant IA/CPHE/14/1/501504 to Tavpritesh Sethi", align = "center", style = "
+position:absolute;
+            bottom:0;
+            width:100%;
+            height:30px;
+            padding:5px;
+            background-color: white;z-index:1200;")
 )
-)
+
+
 )

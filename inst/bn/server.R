@@ -382,11 +382,11 @@ shinyServer(function(input, output,session) {
       # Get the selected learning algorithm from the user and learn the network
       if(input$alg == 'hc')
       {
-        bn.hc.boot.average <<- bnlearn::hc(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::hc(DiscreteData))
       }
       else if(input$alg == 'tabu')
       {
-        bn.hc.boot.average <<- bnlearn::tabu(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::tabu(DiscreteData))
       }
       else if(input$alg == 'gs')
       {
@@ -394,39 +394,39 @@ shinyServer(function(input, output,session) {
       }
       else if(input$alg == 'iamb')
       {
-        bn.hc.boot.average <<- bnlearn::iamb(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::iamb(DiscreteData))
       }
       else if(input$alg == 'fast.iamb')
       {
-        bn.hc.boot.average <<- bnlearn::fast.iamb(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::fast.iamb(DiscreteData))
       }
       else if(input$alg=='inter.iamb')
       {
-        bn.hc.boot.average <<- bnlearn::inter.iamb(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::inter.iamb(DiscreteData))
       }
       else if(input$alg == 'mmhc')
       {
-        bn.hc.boot.average <<- bnlearn::mmhc(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::mmhc(DiscreteData))
       }
       else if(input$alg == 'rsmax2')
       {
-        bn.hc.boot.average <<- bnlearn::rsmax2(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::rsmax2(DiscreteData))
       }
       else if(input$alg == 'mmpc')
       {
-        bn.hc.boot.average <<- bnlearn::mmpc(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::mmpc(DiscreteData))
       }
       else if(input$alg == 'si.hiton.pc')
       {
-        bn.hc.boot.average <<- bnlearn::si.hiton.pc(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::si.hiton.pc(DiscreteData))
       }
       else if(input$alg == 'aracne')
       {
-        bn.hc.boot.average <<- bnlearn::aracne(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::aracne(DiscreteData))
       }
       else
       {
-        bn.hc.boot.average <<- bnlearn::chow.liu(DiscreteData)
+        bn.hc.boot.average <<- cextend(bnlearn::chow.liu(DiscreteData))
       }
       #bn.hc.boot.average <<- bnlearn::hc(DiscreteData)
       bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')

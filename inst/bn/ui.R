@@ -13,7 +13,7 @@ library('shinycssloaders')
 source('error.bar.R')
 library('shinythemes')
 library('shinyBS')
-library(rintrojs)
+library('rintrojs')
 
 
 myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
@@ -353,6 +353,8 @@ dashboardPage(skin = "blue",
                                         hr(),
                                         div(style="text-align:center",
                                             h4("ShinyBN: Democratizing Bayesian Network Analysis in Complex Multivariate Data (submitted)"),
+                                            hr(),
+                                            h4("Correspondence: tavpriteshsethi@iiitd.ac.in"),
                                             hr(),
                                             h4("Acknowledgements - We acknowledge the useful inputs provided
                                                by Prof. Rakesh Lodha, Professor, All India Institute of Medical Sciences, New Delhi, India")

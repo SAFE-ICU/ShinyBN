@@ -10,10 +10,10 @@ library('missRanger')
 library('tools')
 library('shinyalert')
 library('shinycssloaders')
-source('error.bar.R')
 library('shinythemes')
 library('shinyBS')
 library('rintrojs')
+source('error.bar.R')
 
 
 myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
@@ -130,6 +130,12 @@ dashboardPage(skin = "blue",
                                                                  tabPanel("Graph",
                                                                           #status = "primary",
                                                                           div(id="graph",
+                                                                              hr(),
+                                                                              h5('Shape Vector Input:'),
+                                                                              shiny::fluidRow(shiny::column(6,selectizeInput('varselect',label = NULL,"",multiple = T)),
+                                                                                              shiny::column(6,selectInput('varshape',label = NULL,""))
+                                                                              ),
+                                                                              actionButton('group','Group Variables'),
                                                                           div(id = "graphChain",
                                                                             h4("Chain of Neighbours"),
                                                                             sliderInput("degree", label = NULL,

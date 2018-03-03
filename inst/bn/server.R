@@ -10,8 +10,8 @@ library('missRanger')
 library('tools')
 library('shinyalert')
 library('shinycssloaders')
-source('error.bar.R')
 library('rintrojs')
+source('error.bar.R')
 
 shinyServer(function(input, output,session) {
   options(shiny.maxRequestSize=1500*1024^2)
@@ -30,6 +30,9 @@ shinyServer(function(input, output,session) {
   EventNode <<- nodeNames[1]
   EvidenceNode <<- c()
   updateSelectInput(session,'event',choices = nodeNames)
+  updateSelectizeInput(session,'varselect',choices = nodeNames)
+  updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                   "ellipse", "database", "text", "diamond"))
   updateSelectInput(session,'graph_layout',choices = c("layout_nicely","layout_as_star","layout_as_tree","layout_in_circle","layout_with_sugiyama","layout_on_sphere","layout_randomly","layout_with_fr","layout_with_kk","layout_with_lgl","layout_with_mds","layout_on_grid","layout_with_graphopt","layout_with_gem","layout_with_dh"))
   rvs <<- reactiveValues(evidence = list(),values = list(),evidenceObserve = list(),valueObserve = list())
   networkData <<- NetworkGraph[,1:2]
@@ -48,14 +51,16 @@ shinyServer(function(input, output,session) {
     rename(target = id)
 
   edges$width <- 1
-
   nodes$group <- "not in use"
   nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
   nodes[which(nodes$name == EventNode),3] = "Event"
+  nodes$shape = "dot"
+  shapeVector<<- nodes$shape
   ColourScale <- 'd3.scaleOrdinal().domain(["not in use","Event","Evidence"]).range(["#0E5AE8", "#50E80E","#FF0000"]);'
   visNodes<- data.frame(id = selectedNodes,
                         label = selectedNodes,
-                        group = nodes$group)
+                        group = nodes$group,
+                        shape = shapeVector)
   visEdges<- data.frame(from = NetworkGraph$from,
                         to = NetworkGraph$to)
   output$netPlot<-renderVisNetwork({
@@ -267,7 +272,8 @@ shinyServer(function(input, output,session) {
                        nodes[which(nodes$name == EventNode),3] = "Event"
                        visNodes<- data.frame(id = selectedNodes,
                                              label = selectedNodes,
-                                             group = nodes$group)
+                                             group = nodes$group,
+                                             shape = shapeVector)
                        visEdges<- data.frame(from = NetworkGraph$from,
                                              to = NetworkGraph$to)
                        output$netPlot<-renderVisNetwork({
@@ -365,7 +371,8 @@ shinyServer(function(input, output,session) {
       nodes[which(nodes$name == EventNode),3] = "Event"
       visNodes<- data.frame(id = selectedNodes,
                             label = selectedNodes,
-                            group = nodes$group)
+                            group = nodes$group,
+                            shape = shapeVector)
       visEdges<- data.frame(from = NetworkGraph$from,
                             to = NetworkGraph$to)
       output$netPlot<-renderVisNetwork({
@@ -505,7 +512,8 @@ shinyServer(function(input, output,session) {
       nodes[which(nodes$name == EventNode),3] = "Event"
       visNodes<- data.frame(id = selectedNodes,
                             label = selectedNodes,
-                            group = nodes$group)
+                            group = nodes$group,
+                            shape = shapeVector)
       visEdges<- data.frame(from = NetworkGraph$from,
                             to = NetworkGraph$to)
       output$netPlot<-renderVisNetwork({
@@ -732,7 +740,8 @@ shinyServer(function(input, output,session) {
     nodes[which(nodes$name == EventNode),3] = "Event"
     visNodes<- data.frame(id = selectedNodes,
                           label = selectedNodes,
-                          group = nodes$group)
+                          group = nodes$group,
+                          shapeVector)
     visEdges<- data.frame(from = NetworkGraph$from,
                           to = NetworkGraph$to)
     output$netPlot<-renderVisNetwork({
@@ -786,7 +795,8 @@ shinyServer(function(input, output,session) {
     nodes[which(nodes$name == EventNode),3] = "Event"
     visNodes<- data.frame(id = selectedNodes,
                           label = selectedNodes,
-                          group = nodes$group)
+                          group = nodes$group,
+                          shape = shapeVector)
     visEdges<- data.frame(from = NetworkGraph$from,
                           to = NetworkGraph$to)
     output$netPlot<-renderVisNetwork({
@@ -829,7 +839,8 @@ shinyServer(function(input, output,session) {
     nodes[which(nodes$name == EventNode),3] = "Event"
     visNodes<- data.frame(id = selectedNodes,
                           label = selectedNodes,
-                          group = nodes$group)
+                          group = nodes$group,
+                          shape = shapeVector)
     visEdges<- data.frame(from = NetworkGraph$from,
                           to = NetworkGraph$to)
     output$netPlot<-renderVisNetwork({
@@ -849,7 +860,8 @@ shinyServer(function(input, output,session) {
 
 
   })
-  observeEvent(input$secondGraphBtn,{
+  observeEvent(input$group,{
+    shapeVector[which(nodeNames %in% input$varselect)] <<- input$varshape
     for(elem in inserted)
     {
       EvidenceNode = c(EvidenceNode,input[[elem]])
@@ -875,7 +887,8 @@ shinyServer(function(input, output,session) {
     nodes[which(nodes$name == EventNode),3] = "Event"
     visNodes<- data.frame(id = selectedNodes,
                           label = selectedNodes,
-                          group = nodes$group)
+                          group = nodes$group,
+                          shape = shapeVector)
     visEdges<- data.frame(from = NetworkGraph$from,
                           to = NetworkGraph$to)
     output$netPlot<-renderVisNetwork({
@@ -892,9 +905,8 @@ shinyServer(function(input, output,session) {
         visIgraphLayout(layout = input$graph_layout)
     })
 
-
-
   })
+
 
   #homeIntroduction Event
   observeEvent(input$homeIntro,

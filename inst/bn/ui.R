@@ -282,7 +282,7 @@ dashboardPage(skin = "blue",
 
                                                                           ),
 
-                                                                          bsPopover('secondGraphBtn', trigger = "hover", title = "Update", content = "Reloads the network graph", placement = "left", options = list(container = "body")),
+                                                                          bsPopover('GraphBtn', trigger = "hover", title = "Update", content = "Reloads the network graph", placement = "left", options = list(container = "body")),
                                                                           bsPopover('secondSaveBtn', trigger = "hover", title = "Save",
                                                                                     content = "Saves graph to XYZ file. Go to Graph tab for more options",
                                                                                     placement = "bottom", options = list(container = "body")),

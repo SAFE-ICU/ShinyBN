@@ -615,14 +615,17 @@ shinyServer(function(input, output,session) {
       probs = prop.table(table(cpdist(bn.hc.boot.fit,input$event,evidence = eval(parse(text = str1)))))
       output$distPlot = renderPlot({par(mar=c(5,3,3,3))
         par(oma=c(5,3,3,3))
-        barplot(probs,
+        barx<-barplot(probs,
                 col = "lightblue",
                 main = "Conditional Probabilities",
                 border = NA,
                 xlab = "",
                 ylab = "Probabilities",
                 ylim = c(0,1),
-                las=2)})
+                las=2)
+        text(x = barx,y = round(probs,digits = 4),label = round(probs,digits = 4), pos = 3, cex = 0.8, col = "black")
+        })
+
 
     },error = function(e){
       print("error 5")
@@ -664,6 +667,7 @@ shinyServer(function(input, output,session) {
                        ylab = "Probabilities",
                        ylim = c(0,1),
                        las=2)
+        text(x = barx,y = round(ee$mean,digits = 4),label = round(ee$mean,digits = 4), pos = 3, cex = 0.8, col = "black")
         error.bar(barx,ee$mean, 1.96*ee$sd/sqrt(input$plotStrengthBtn))})
 
     },error = function(e){

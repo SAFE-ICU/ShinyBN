@@ -143,6 +143,9 @@ dashboardPage(skin = "blue",
                                                                           shiny::conditionalPanel(
 
                                                                             condition = "input.net == 1",
+                                                                            h5("Paramter learning type"),
+                                                                            selectizeInput('paramMethod',label = NULL,choices = c("Maximum Likelihood parameter estimation" = "mle","Bayesian parameter estimation" = "bayes")),
+                                                                            hr(),
                                                                             div(style ='overflow-y:scroll',
                                                                             # File input
                                                                             shiny::p("Note: Upload .RData file"),
@@ -205,7 +208,8 @@ dashboardPage(skin = "blue",
                                                                             sliderInput("directionStrength", label = NULL,
                                                                                         min = 0, max = 1,
                                                                                         value = 0.5),
-
+                                                                            h5("Parameter Learning Type"),
+                                                                            selectizeInput("paramMethod2",label = NULL,choices = c("Maximum Likelihood parameter estimation" = "mle","Bayesian parameter estimation" = "bayes")),
 
                                                                             actionButton('learnBtn', 'Learn'),
                                                                             actionButton('learnSBtn','Learn simple'),
@@ -301,7 +305,10 @@ dashboardPage(skin = "blue",
                                                                          ),
 
                                                                  tabPanel("Inference Plot",
-                                                                          withSpinner(plotOutput("distPlot",height = "600px")), color="#2E86C1")
+                                                                          withSpinner(plotOutput("distPlot",height = "600px")), color="#2E86C1"),
+                                                                 tabPanel('Network Parameter',
+                                                                          selectInput("paramSelect",label = NULL,""),
+                                                                          withSpinner(plotOutput("parameterPlot",height = "600px")),color="#2E86C1")
                                                                  )
                                                           )
 

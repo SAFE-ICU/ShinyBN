@@ -36,6 +36,7 @@ shinyServer(function(input, output,session) {
   updateSelectInput(session,'varshape2',choices = c( "dot","square", "triangle", "box", "circle", "star",
                                                     "ellipse", "database", "text", "diamond"))
   updateSelectInput(session,'graph_layout',choices = c("layout_nicely","layout_as_star","layout_as_tree","layout_in_circle","layout_with_sugiyama","layout_on_sphere","layout_randomly","layout_with_fr","layout_with_kk","layout_with_lgl","layout_with_mds","layout_on_grid","layout_with_graphopt","layout_with_gem","layout_with_dh"))
+  updateSelectInput(session,'paramSelect',choices = nodeNames)
   rvs <<- reactiveValues(evidence = list(),values = list(),evidenceObserve = list(),valueObserve = list())
   networkData <<- NetworkGraph[,1:2]
   selectedNodes <<- nodeNames
@@ -222,7 +223,7 @@ shinyServer(function(input, output,session) {
                        })
 
                        #print("2")
-                       bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
+                       bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = input$paramMethod)
                        print("Learned Structure loaded")
                        for(elem in 1:length(inserted))
                        {
@@ -321,7 +322,7 @@ shinyServer(function(input, output,session) {
       bn.hc.boot <<- boot.strength(data = DiscreteData, R = input$boot, m = ceiling(nrow(DiscreteData)*input$SampleSize), algorithm = input$alg)
       bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength > input$edgeStrength & bn.hc.boot$direction > input$directionStrength,]
       bn.hc.boot.average <<- cextend(averaged.network(bn.hc.boot.pruned))
-      bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
+      bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = input$paramMethod2)
       print("Structure learning done")
       for(elem in 1:length(inserted))
       {
@@ -462,7 +463,7 @@ shinyServer(function(input, output,session) {
         bn.hc.boot.average <<- cextend(bnlearn::chow.liu(DiscreteData))
       }
       #bn.hc.boot.average <<- bnlearn::hc(DiscreteData)
-      bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = 'bayes')
+      bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = input$paramMethod2)
       print("Structure learning done")
       for(elem in 1:length(inserted))
       {
@@ -538,6 +539,11 @@ shinyServer(function(input, output,session) {
 
     })
 
+
+  })
+  observeEvent(input$paramSelect,{
+    #print(bn.hc.boot.fit[input$paramSelect])
+    output$parameterPlot<-renderPlot({bn.fit.barchart(bn.hc.boot.fit[[input$paramSelect]])})
 
   })
 

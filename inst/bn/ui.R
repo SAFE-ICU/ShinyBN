@@ -291,7 +291,7 @@ dashboardPage(skin = "blue",
                                                                  tabPanel("Network Graph",
 
                                                                           div(style = "position:absolute;right:1em;margin-right:10px;",
-                                                                              bsButton('secondGraphBtn', '', icon = icon("refresh"),style = "default"),
+                                                                              bsButton('graphBtn', '', icon = icon("refresh"),style = "default"),
                                                                               bsButton('secondSaveBtn', '', icon = icon("save"),style="default")
 
                                                                           ),

@@ -696,6 +696,7 @@ shinyServer(function(input, output,session) {
   })
   observeEvent(input$secondSaveBtn,{
     tryCatch({
+      print("save")
       save(bn.hc.boot.average,file = input$path)
 
     },error = function(e)
@@ -826,6 +827,7 @@ shinyServer(function(input, output,session) {
     })
   })
   observeEvent(input$graphBtn,{
+    print("graph")
     for(elem in inserted)
     {
       EvidenceNode = c(EvidenceNode,input[[elem]])

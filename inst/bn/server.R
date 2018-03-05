@@ -623,7 +623,7 @@ shinyServer(function(input, output,session) {
         par(oma=c(5,3,3,3))
         barx<-barplot(probs,
                 col = "lightblue",
-                main = "Conditional Probabilities",
+                main = paste("Conditional Probabilities on ",input$event),
                 border = NA,
                 xlab = "",
                 ylab = "Probabilities",
@@ -667,7 +667,7 @@ shinyServer(function(input, output,session) {
         par(oma=c(5,3,3,3))
         barx <-barplot(ee$mean,
                        col = "lightblue",
-                       main = "Conditional Probabilities",
+                       main = paste("Conditional Probabilities on ",input$event),
                        border = NA,
                        xlab = "",
                        ylab = "Probabilities",

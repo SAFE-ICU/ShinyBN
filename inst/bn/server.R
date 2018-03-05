@@ -273,6 +273,8 @@ shinyServer(function(input, output,session) {
                        nodes$group <- "not in use"
                        nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
                        nodes[which(nodes$name == EventNode),3] = "Event"
+                       nodes$shape = "dot"
+                       shapeVector<<- nodes$shape
                        visNodes<- data.frame(id = selectedNodes,
                                              label = selectedNodes,
                                              group = nodes$group,
@@ -292,6 +294,14 @@ shinyServer(function(input, output,session) {
                            visInteraction(navigationButtons = TRUE)%>%
                            visIgraphLayout(layout = input$graph_layout)
                        })
+                       updateSelectInput(session,'event',choices = nodeNames)
+                       updateSelectizeInput(session,'varselect',choices = nodeNames)
+                       updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                                         "ellipse", "database", "text", "diamond"))
+                       updateSelectInput(session,'varshape2',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                                          "ellipse", "database", "text", "diamond"))
+                       updateSelectInput(session,'graph_layout',choices = c("layout_nicely","layout_as_star","layout_as_tree","layout_in_circle","layout_with_sugiyama","layout_on_sphere","layout_randomly","layout_with_fr","layout_with_kk","layout_with_lgl","layout_with_mds","layout_on_grid","layout_with_graphopt","layout_with_gem","layout_with_dh"))
+                       updateSelectInput(session,'paramSelect',choices = nodeNames)
                      },error = function(e){
                        print("error 1")
                        shinyalert(toString(e), type = "error")
@@ -372,6 +382,8 @@ shinyServer(function(input, output,session) {
       nodes$group <- "not in use"
       nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
       nodes[which(nodes$name == EventNode),3] = "Event"
+      nodes$shape = "dot"
+      shapeVector<<- nodes$shape
       visNodes<- data.frame(id = selectedNodes,
                             label = selectedNodes,
                             group = nodes$group,
@@ -391,6 +403,14 @@ shinyServer(function(input, output,session) {
           visInteraction(navigationButtons = TRUE)%>%
           visIgraphLayout(layout = input$graph_layout)
       })
+      updateSelectInput(session,'event',choices = nodeNames)
+      updateSelectizeInput(session,'varselect',choices = nodeNames)
+      updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                        "ellipse", "database", "text", "diamond"))
+      updateSelectInput(session,'varshape2',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                         "ellipse", "database", "text", "diamond"))
+      updateSelectInput(session,'graph_layout',choices = c("layout_nicely","layout_as_star","layout_as_tree","layout_in_circle","layout_with_sugiyama","layout_on_sphere","layout_randomly","layout_with_fr","layout_with_kk","layout_with_lgl","layout_with_mds","layout_on_grid","layout_with_graphopt","layout_with_gem","layout_with_dh"))
+      updateSelectInput(session,'paramSelect',choices = nodeNames)
     },error = function(e){
       print("error 2")
       shinyalert(toString(e), type = "error")
@@ -513,6 +533,11 @@ shinyServer(function(input, output,session) {
       nodes$group <- "not in use"
       nodes[which(nodes$name %in% EvidenceNode),3] = "Evidence"
       nodes[which(nodes$name == EventNode),3] = "Event"
+      nodes$shape = "dot"
+      shapeVector<<- nodes$shape
+      #print(nodeNames)
+      #print(nodes$group)
+      #print(shapeVector)
       visNodes<- data.frame(id = selectedNodes,
                             label = selectedNodes,
                             group = nodes$group,
@@ -532,6 +557,14 @@ shinyServer(function(input, output,session) {
           visInteraction(navigationButtons = TRUE)%>%
           visIgraphLayout(layout = input$graph_layout)
       })
+      updateSelectInput(session,'event',choices = nodeNames)
+      updateSelectizeInput(session,'varselect',choices = nodeNames)
+      updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                        "ellipse", "database", "text", "diamond"))
+      updateSelectInput(session,'varshape2',choices = c( "dot","square", "triangle", "box", "circle", "star",
+                                                         "ellipse", "database", "text", "diamond"))
+      updateSelectInput(session,'graph_layout',choices = c("layout_nicely","layout_as_star","layout_as_tree","layout_in_circle","layout_with_sugiyama","layout_on_sphere","layout_randomly","layout_with_fr","layout_with_kk","layout_with_lgl","layout_with_mds","layout_on_grid","layout_with_graphopt","layout_with_gem","layout_with_dh"))
+      updateSelectInput(session,'paramSelect',choices = nodeNames)
     },error = function(e){
       print("error 3")
       shinyalert(toString(e), type = "error")

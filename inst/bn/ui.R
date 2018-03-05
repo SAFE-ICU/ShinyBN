@@ -249,7 +249,7 @@ dashboardPage(skin = "blue",
                                                                                   h4("Save Network Graph"),
                                                                                   actionButton('saveBtn2','Save'),
                                                                                   h5('Enter Directory with file Name:'),
-                                                                                  textInput('path2',label = NULL, value = "file type .csv", width = NULL, placeholder = NULL))
+                                                                                  textInput('path2',label = NULL, value = "file type .csv", width = NULL, placeholder = "R code for vector of indices"))
                                                                           )),
                                                                  tabPanel("Inference",
                                                                           status = "primary",

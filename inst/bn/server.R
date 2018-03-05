@@ -543,7 +543,11 @@ shinyServer(function(input, output,session) {
   })
   observeEvent(input$paramSelect,{
     #print(bn.hc.boot.fit[input$paramSelect])
-    output$parameterPlot<-renderPlot({bn.fit.barchart(bn.hc.boot.fit[[input$paramSelect]])})
+    tryCatch({
+      output$parameterPlot<-renderPlot({bn.fit.barchart(bn.hc.boot.fit[[input$paramSelect]])})
+    },error = function(e){
+      shinyalert(toString(e), type = "error")
+    })
 
   })
 

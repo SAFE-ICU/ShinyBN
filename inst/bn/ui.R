@@ -306,7 +306,7 @@ dashboardPage(skin = "blue",
 
                                                                  tabPanel("Inference Plot",
                                                                           withSpinner(plotOutput("distPlot",height = "600px")), color="#2E86C1"),
-                                                                 tabPanel('Network Parameter',
+                                                                 tabPanel('Parameter Distribution',
                                                                           selectInput("paramSelect",label = NULL,""),
                                                                           withSpinner(plotOutput("parameterPlot",height = "600px")),color="#2E86C1")
                                                                  )

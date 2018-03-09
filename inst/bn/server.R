@@ -15,8 +15,8 @@ source('error.bar.R')
 source('Graph.Custom.R')
 
 shinyServer(function(input, output,session) {
+  #Data upload limit
   options(shiny.maxRequestSize=1500*1024^2)
-  output$distPlot<- renderPlot(validate("Built infrence plot will be displayed"))
   #Structure Initialization
   D <- get(load('a.RData'))
   DiscreteData <- D
@@ -34,14 +34,16 @@ shinyServer(function(input, output,session) {
   #App Initialization
   inserted  <- c()
   insertedV <- c()
+  rvs <<- reactiveValues(evidence = list(),values = list(),evidenceObserve = list(),valueObserve = list())
   updateSelectInput(session,'event',choices = nodeNames)
   updateSelectizeInput(session,'varselect',choices = nodeNames)
   updateSelectInput(session,'paramSelect',choices = nodeNames)
   updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star","ellipse", "database", "text", "diamond"))
   updateSelectInput(session,'varshape2',choices = c( "dot","square", "triangle", "box", "circle", "star","ellipse", "database", "text", "diamond"))
   updateSelectInput(session,'graph_layout',choices = c("layout_nicely","layout_as_star","layout_as_tree","layout_in_circle","layout_with_sugiyama","layout_on_sphere","layout_randomly","layout_with_fr","layout_with_kk","layout_with_lgl","layout_with_mds","layout_on_grid","layout_with_graphopt","layout_with_gem","layout_with_dh"))
-  rvs <<- reactiveValues(evidence = list(),values = list(),evidenceObserve = list(),valueObserve = list())
-
+  output$distPlot<- renderPlot(validate("Built infrence plot will be displayed"))
+  #Sanity check
+  sanity<-1
 
   observeEvent(input$start,{
     updateTabItems(session, "sidebarMenu", "Structure")
@@ -598,10 +600,10 @@ shinyServer(function(input, output,session) {
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
       }
-      if(temp==1)
+      if(sanity==1)
       {
         EventNode = nodeNames[1]
-        temp = temp + 1
+        sanity=sanity + 1
       }
       else
       {
@@ -621,10 +623,10 @@ shinyServer(function(input, output,session) {
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
       }
-      if(temp==1)
+      if(sanity==1)
       {
         EventNode = nodeNames[1]
-        temp = temp + 1
+        sanity=sanity + 1
       }
       else
       {
@@ -643,7 +645,15 @@ shinyServer(function(input, output,session) {
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
       }
-      EventNode = input$event
+      if(sanity==1)
+      {
+        EventNode = nodeNames[1]
+        sanity=sanity + 1
+      }
+      else
+      {
+        EventNode = input$event
+      }
       output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
@@ -658,7 +668,15 @@ shinyServer(function(input, output,session) {
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
       }
-      EventNode = input$event
+      if(sanity==1)
+      {
+        EventNode = nodeNames[1]
+        sanity=sanity + 1
+      }
+      else
+      {
+        EventNode = input$event
+      }
       output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
@@ -676,7 +694,15 @@ shinyServer(function(input, output,session) {
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
       }
-      EventNode = input$event
+      if(sanity==1)
+      {
+        EventNode = nodeNames[1]
+        sanity=sanity + 1
+      }
+      else
+      {
+        EventNode = input$event
+      }
       output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")

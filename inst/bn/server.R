@@ -92,6 +92,7 @@ shinyServer(function(input, output,session) {
         }
         check.discrete(DiscreteData)
         check.NA(DiscreteData)
+        DiscreteData<<-as.data.frame(DiscreteData)
         },error = function(e){
              shinyalert(c("Error in loading data: ",toString(e)), type = "error")
            })
@@ -101,40 +102,41 @@ shinyServer(function(input, output,session) {
     tryCatch({
       withProgress(message = "Discretizing data", value = 0, {
         tempDiscreteData <- DiscreteData
-        intVar = sapply(tempDiscreteData,is.integer)
-        intVar = intVar[which(intVar==TRUE)]
-        tempDiscreteData[,intVar]<-lapply(tempDiscreteData[,intVar],as.numeric)
-        numVar = sapply(tempDiscreteData,is.numeric)
-        numVar = numVar[which(numVar==TRUE)]
-        print(tempDiscreteData[,numVar])
-        tempDiscreteData[,numVar]<-lapply(tempDiscreteData[,numVar],custom.discretize,input$dtype)
-        print(head(tempDiscreteData))
-        #tempDiscreteData[,which(lapply(tempDiscreteData,nlevels)<2)] = NULL
-        #tempDiscreteData <- droplevels(tempDiscreteData)
-        #print(tempDiscreteData)
-        #DiscreteData <<-tempDiscreteData
+        for(n in colnames(tempDiscreteData))
+        {
+          if(is.numeric(tempDiscreteData[,n])|| is.integer(tempDiscreteData[,n]))
+          {
+            temp = custom.discretize(as.numeric(tempDiscreteData[,n]),input$dtype)
+            tempDiscreteData[,n]<-temp
+          }
+        }
+        tempDiscreteData[,which(lapply(tempDiscreteData,nlevels)<2)] = NULL
+        tempDiscreteData <- droplevels(tempDiscreteData)
+        DiscreteData <<-tempDiscreteData
       })},error = function(e){
         print("error0")
         print(e)
         type <- toString(input$dtype)
         messageString <- paste(c("Error is discretising using method ", type, ". Try using other method or upload pre-discretised data."), collapse = '')
-        #shinyalert(messageString, type = "error")
+        shinyalert(messageString, type = "error")
       })
 
   })
 
   observeEvent(input$impute,{
-    tryCatch(
-    {withProgress(message = "Imputing missing data", value = 0, {
-      DiscreteData <<- missRanger(DiscreteData,maxiter = 2)
-      if(sum(sapply(DiscreteData,is.numeric))>0)
+    tryCatch({
+      withProgress(message = "Imputing missing data", value = 0, {
+      for(n in colnames(DiscreteData))
       {
-        shinyalert(c("Data has numeric variables, you can discretize the data using the available methods in the app "), type = "error")
+        if(is.character(DiscreteData[,n]))
+        {
+          DiscreteData[,n]<<-as.factor(DiscreteData[,n])
+        }
       }
+      DiscreteData <<- missRanger(DiscreteData,maxiter = 2,num.tree = 100)
+      check.discrete(DiscreteData)
       if(sum(is.na(DiscreteData))>0)
-      {
-        shinyalert(c("Data has missing values, you can impute the data using the app "), type = "error")
-      }
+      check.NA(DiscreteData)
     })}, error = function(e){
       print("error0")
       print(toString(e))

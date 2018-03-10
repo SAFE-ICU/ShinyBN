@@ -124,7 +124,7 @@ dashboardPage(skin = "blue",
                                                                           div(id="dataDiscretize",
                                                                           shiny::h4('Discretize Data'),
                                                                           h5('Discretization Type:'),
-                                                                          shiny::selectInput('dtype',label = NULL,c("interval", "quantile")),
+                                                                          shiny::selectInput('dtype',label = NULL,c("interval","quantile","frequency","cluster","hybrid")),
                                                                           actionButton('discretize',"Discretize")
                                                                           ))),
                                                                  tabPanel("Learning",

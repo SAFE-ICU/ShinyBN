@@ -1,4 +1,4 @@
-Graph.Custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,Ndegree,Tlayout)
+graph.custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,Ndegree,Tlayout)
 {
   tryCatch({
     nodes <- data.frame(name = nodeNames)
@@ -24,11 +24,7 @@ Graph.Custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNo
              visInteraction(navigationButtons = TRUE)%>%
              visIgraphLayout(layout = Tlayout))
   },error=function(e){
-    message(visNodes)
-    message(visEdges)
     shinyalert(e)
-    return(e)
-
   })
 
 }

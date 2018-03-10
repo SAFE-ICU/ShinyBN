@@ -11,8 +11,12 @@ library('tools')
 library('shinyalert')
 library('shinycssloaders')
 library('rintrojs')
+library('arules')
 source('error.bar.R')
-source('Graph.Custom.R')
+source('graph.custom.R')
+source('custom.discretize.R')
+source('check.NA.R')
+source('check.discrete.R')
 
 shinyServer(function(input, output,session) {
   #Data upload limit
@@ -30,7 +34,7 @@ shinyServer(function(input, output,session) {
   shapeVector<- rep('dot',length(nodeNames))
   EventNode <- nodeNames[1]
   EvidenceNode <- c()
-  output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,2,'layout_nicely')})
+  output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,2,'layout_nicely')})
   #App Initialization
   inserted  <- c()
   insertedV <- c()
@@ -49,92 +53,72 @@ shinyServer(function(input, output,session) {
     updateTabItems(session, "sidebarMenu", "Structure")
     })
 
-  # Get the data selection from user
-  observeEvent(input$dataFile,
+  #Data Frame From User
+  observeEvent(input$dataFile,{
+    inFile <- input$dataFile
+    if (is.null(inFile))
+    {
+      shinyalert("Data file is empty, pls upload a valid datafile",type = "error")
+    }
+    else
+    {
+      tryCatch({
+        if(input$format==".RData")
+        {
+          if(file_ext(inFile$datapath) == "RData")
+          {
+            tryCatch({
+              DiscreteData <<- get(load(inFile$datapath))
+              },error = function(e){
+                DiscreteData<<- readRDS(inFile$datapath)
+              })
+          }
+          else
+          {
+            shinyalert("Added file is not a .RData file.Please upload a RData file.", type = "error")
+          }
 
-               {# Get the uploaded file from user
-                 inFile <- input$dataFile
-                 if (is.null(inFile))
-                 {
-                   #DiscreteData <<- NULL
-                   print("Data File is empty")
-                 }
-                 else
-                 {
-                   tryCatch({
-                     if(input$format==".RData")
-                     {
-                       if(file_ext(inFile$datapath) == "RData")
-                       {
-                         tryCatch({
-                           DiscreteData <<- get(load(inFile$datapath))
-
-                         },error = function(e){
-                           DiscreteData<<- readRDS(inFile$datapath)
-                         })
-
-                       }
-                       else
-                       {
-                         shinyalert("Added file is not a .RData file. Try uploading again.", type = "error")
-                       }
-
-                     }
-                     else
-                     {
-                       if(file_ext(inFile$datapath) == "csv")
-                       {
-                         DiscreteData <<- read.csv(inFile$datapath,stringsAsFactors = T)
-                       }
-                       else
-                       {
-                         shinyalert("Added file is not a .csv file. Try uploading again.", type = "error")
-                       }
-                     }
-                     if(sum(sapply(DiscreteData,is.numeric))>0)
-                     {
-                       shinyalert(c("Data has numeric variables, you can discretize the data using the available methods in the app "), type = "error")
-                     }
-                     if(sum(is.na(DiscreteData))>0)
-                     {
-                       shinyalert(c("Data has missing values, you can impute the data using the app "), type = "error")
-                     }
-
-                   },error = function(e){
-                     print("error0")
-                     shinyalert(c("Error in loading data: ",toString(e)), type = "error")
-                   })
-                   print("Data loaded")
-                 }
-
-
-               }
-  )
+        }
+        else
+        {
+          if(file_ext(inFile$datapath) == "csv")
+          {
+            DiscreteData <<- read.csv(inFile$datapath,stringsAsFactors = T)
+          }
+          else
+          {
+            shinyalert("Added file is not a .csv file.Please upload a CSV file.", type = "error")
+          }
+        }
+        check.discrete(DiscreteData)
+        check.NA(DiscreteData)
+        },error = function(e){
+             shinyalert(c("Error in loading data: ",toString(e)), type = "error")
+           })
+      }
+    })
   observeEvent(input$discretize,{
-    tryCatch(
-      {withProgress(message = "Discretizing data", value = 0, {
-        tempDiscreteData <<- DiscreteData
-        int <- sapply(tempDiscreteData,is.integer)
-        tempDiscreteData[,int] <<- lapply(tempDiscreteData[,int], as.numeric)
-        tempDiscreteData <<- as.data.frame(bnlearn::discretize(data.frame(tempDiscreteData),method=input$dtype))
-        tempDiscreteData[,which(mapply(nlevels,tempDiscreteData[,sapply(DiscreteData,is.factor)])<2)] = NULL
-        tempDiscreteData <<- droplevels(tempDiscreteData)
-        print(tempDiscreteData)
-        DiscreteData <<-tempDiscreteData
-        if(sum(sapply(DiscreteData,is.numeric))>0)
-        {
-          shinyalert(c("Data has numeric variables, you can discretize the data using the available methods in the app "), type = "error")
-        }
-        if(sum(is.na(DiscreteData))>0)
-        {
-          shinyalert(c("Data has missing values, you can impute the data using the app "), type = "error")
-        }
+    tryCatch({
+      withProgress(message = "Discretizing data", value = 0, {
+        tempDiscreteData <- DiscreteData
+        intVar = sapply(tempDiscreteData,is.integer)
+        intVar = intVar[which(intVar==TRUE)]
+        tempDiscreteData[,intVar]<-lapply(tempDiscreteData[,intVar],as.numeric)
+        numVar = sapply(tempDiscreteData,is.numeric)
+        numVar = numVar[which(numVar==TRUE)]
+        print(tempDiscreteData[,numVar])
+        tempDiscreteData[,numVar]<-lapply(tempDiscreteData[,numVar],custom.discretize,input$dtype)
+        print(head(tempDiscreteData))
+        #tempDiscreteData[,which(lapply(tempDiscreteData,nlevels)<2)] = NULL
+        #tempDiscreteData <- droplevels(tempDiscreteData)
+        #print(tempDiscreteData)
+        #DiscreteData <<-tempDiscreteData
       })},error = function(e){
         print("error0")
-        print(toString(e))
+        print(e)
         type <- toString(input$dtype)
         messageString <- paste(c("Error is discretising using method ", type, ". Try using other method or upload pre-discretised data."), collapse = '')
-        shinyalert(messageString, type = "error")
+        #shinyalert(messageString, type = "error")
       })
 
   })
@@ -218,7 +202,7 @@ shinyServer(function(input, output,session) {
                        EvidenceNode <<- c()
                        shapeVector<<- rep('dot',length(nodeNames))
                        updateSelectInput(session,'event',choices = nodeNames)
-                       output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+                       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
                        updateSelectizeInput(session,'varselect',choices = nodeNames)
                        updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
                                                                          "ellipse", "database", "text", "diamond"))
@@ -287,7 +271,7 @@ shinyServer(function(input, output,session) {
       EvidenceNode <<- c()
       shapeVector<<- rep('dot',length(nodeNames))
       updateSelectInput(session,'event',choices = nodeNames)
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
       updateSelectInput(session,'event',choices = nodeNames)
       updateSelectizeInput(session,'varselect',choices = nodeNames)
       updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
@@ -399,7 +383,7 @@ shinyServer(function(input, output,session) {
       EvidenceNode <<- c()
       shapeVector<<- rep('dot',length(nodeNames))
       updateSelectInput(session,'event',choices = nodeNames)
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
       updateSelectInput(session,'event',choices = nodeNames)
       updateSelectizeInput(session,'varselect',choices = nodeNames)
       updateSelectInput(session,'varshape',choices = c( "dot","square", "triangle", "box", "circle", "star",
@@ -609,7 +593,7 @@ shinyServer(function(input, output,session) {
       {
         EventNode = input$event
       }
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -632,7 +616,7 @@ shinyServer(function(input, output,session) {
       {
         EventNode = input$event
       }
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -654,7 +638,7 @@ shinyServer(function(input, output,session) {
       {
         EventNode = input$event
       }
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -677,7 +661,7 @@ shinyServer(function(input, output,session) {
       {
         EventNode = input$event
       }
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -703,7 +687,7 @@ shinyServer(function(input, output,session) {
       {
         EventNode = input$event
       }
-      output$netPlot<-renderVisNetwork({Graph.Custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 

@@ -12,11 +12,16 @@ library('shinyalert')
 library('shinycssloaders')
 library('rintrojs')
 library('arules')
+library('rcompanion')
+library('psych')
+library('DescTools')
 source('error.bar.R')
 source('graph.custom.R')
+source('graph.custom.assoc.R')
 source('custom.discretize.R')
 source('check.NA.R')
 source('check.discrete.R')
+source('custom.association.R')
 
 shinyServer(function(input, output,session) {
   #Data upload limit
@@ -48,11 +53,24 @@ shinyServer(function(input, output,session) {
   output$distPlot<- renderPlot(validate("Built infrence plot will be displayed"))
   #Sanity check
   sanity<-1
+  #Association Network
+  assocNetwork<-custom.association(DiscreteData,"cramer's V")
+  assocNetworkprune<- assocNetwork[which(assocNetwork[,3]>0.3),]
+  output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,2,'layout_nicely')})
+
 
   observeEvent(input$start,{
     updateTabItems(session, "sidebarMenu", "Structure")
     })
-
+  observeEvent(input$threshold,{
+    assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
+    output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
+  })
+  observeEvent(input$association,{
+    assocNetwork<<-custom.association(DiscreteData,input$assocType)
+    assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
+    output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
+  })
   #Data Frame From User
   observeEvent(input$dataFile,{
     inFile <- input$dataFile
@@ -100,6 +118,7 @@ shinyServer(function(input, output,session) {
     })
   observeEvent(input$discretize,{
     tryCatch({
+      check.NA(DiscreteData)
       withProgress(message = "Discretizing data", value = 0, {
         tempDiscreteData <- DiscreteData
         for(n in colnames(tempDiscreteData))
@@ -135,7 +154,6 @@ shinyServer(function(input, output,session) {
       }
       DiscreteData <<- missRanger(DiscreteData,maxiter = 2,num.tree = 100)
       check.discrete(DiscreteData)
-      if(sum(is.na(DiscreteData))>0)
       check.NA(DiscreteData)
     })}, error = function(e){
       print("error0")
@@ -596,6 +614,8 @@ shinyServer(function(input, output,session) {
         EventNode = input$event
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
+      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -619,6 +639,8 @@ shinyServer(function(input, output,session) {
         EventNode = input$event
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
+      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 

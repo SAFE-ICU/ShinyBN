@@ -125,7 +125,10 @@ dashboardPage(skin = "blue",
                                                                           shiny::h4('Discretize Data'),
                                                                           h5('Discretization Type:'),
                                                                           shiny::selectInput('dtype',label = NULL,c("interval","quantile","frequency","cluster","hybrid")),
-                                                                          actionButton('discretize',"Discretize")
+                                                                          actionButton('discretize',"Discretize"),
+                                                                          h5("Association Network"),
+                                                                          shiny::selectInput('assocType',label = NULL,c("cramer's V","Cohen's D","Goodman Kruskal lambda","Tschuprow's T")),
+                                                                          actionButton('association',"Build")
                                                                           ))),
                                                                  tabPanel("Learning",
                                                                           status = "primary",
@@ -303,6 +306,13 @@ dashboardPage(skin = "blue",
                                                                           br(),
                                                                           withSpinner(visNetworkOutput("netPlot",height = "600px"), color= "#2E86C1")
                                                                          ),
+                                                                 tabPanel("Association Graph",
+                                                                          sliderInput("threshold", label = NULL,
+                                                                                      min = 0, max = 1,
+                                                                                      value = 0.5
+                                                                          ),
+                                                                          withSpinner(visNetworkOutput("assocPlot",height = "600px"), color= "#2E86C1")
+                                                                          ),
 
                                                                  tabPanel("Inference Plot",
                                                                           withSpinner(plotOutput("distPlot",height = "600px")), color="#2E86C1"),

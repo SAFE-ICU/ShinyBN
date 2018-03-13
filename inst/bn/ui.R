@@ -13,6 +13,7 @@ library('shinycssloaders')
 library('shinythemes')
 library('shinyBS')
 library('rintrojs')
+library("DT")
 source('error.bar.R')
 
 
@@ -318,7 +319,10 @@ dashboardPage(skin = "blue",
                                                                           withSpinner(plotOutput("distPlot",height = "600px")), color="#2E86C1"),
                                                                  tabPanel('Prevalence',
                                                                           selectInput("paramSelect",label = NULL,""),
-                                                                          withSpinner(plotOutput("parameterPlot",height = "600px")),color="#2E86C1")
+                                                                          withSpinner(plotOutput("parameterPlot",height = "600px")),color="#2E86C1"),
+                                                                 tabPanel("Tables",
+                                                                          selectInput("tableName",label = NULL,""),
+                                                                          withSpinner(DT::dataTableOutput("tableOut")),color = "#2E86C1")
                                                                  )
                                                           )
 

@@ -15,6 +15,7 @@ library('arules')
 library('rcompanion')
 library('psych')
 library('DescTools')
+library("DT")
 source('error.bar.R')
 source('graph.custom.R')
 source('graph.custom.assoc.R')
@@ -58,8 +59,23 @@ shinyServer(function(input, output,session) {
   assocNetworkprune<- assocNetwork[which(assocNetwork[,3]>0.3),]
   shapeVectorAssoc<- rep('dot',length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2]))))
   output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,2,'layout_nicely',shapeVectorAssoc)})
-
-
+  #Tables
+  updateSelectInput(session,"tableName",choices = c("Data","Association Graph","Bayesian Graph"))
+  output$tableOut<- DT::renderDataTable({DiscreteData},options = list(scrollX = TRUE,pageLength = 10))
+  observeEvent(input$tableName,{
+    if(input$tableName=="Data")
+    {
+      output$tableOut<- DT::renderDataTable({DiscreteData},options = list(scrollX = TRUE,pageLength = 10))
+    }
+    else if(input$tableName == "Association Graph")
+    {
+      output$tableOut<- DT::renderDataTable({assocNetwork},options = list(scrollX = TRUE,pageLength = 10))
+    }
+    else if(input$tableName=="Bayesian Graph")
+    {
+      output$tableOut<- DT::renderDataTable({NetworkGraph},options = list(scrollX = TRUE,pageLength = 10))
+    }
+  })
   observeEvent(input$start,{
     updateTabItems(session, "sidebarMenu", "Structure")
     })

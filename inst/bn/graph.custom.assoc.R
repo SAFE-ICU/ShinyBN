@@ -1,4 +1,4 @@
-graph.custom.assoc <- function(assocNetwork,nodeNames,EvidenceNode,EventNode,Ndegree,Tlayout)
+graph.custom.assoc <- function(assocNetwork,nodeNames,EvidenceNode,EventNode,Ndegree,Tlayout,shapeVectorAssoc)
 {
   tryCatch({
     nodes <- data.frame(name = nodeNames)
@@ -8,7 +8,8 @@ graph.custom.assoc <- function(assocNetwork,nodeNames,EvidenceNode,EventNode,Nde
     nodes[which(nodes$name == EventNode),3] = "Event"
     visNodes<- data.frame(id = nodeNames,
                           label = nodeNames,
-                          group = nodes$group)
+                          group = nodes$group,
+                          shape = shapeVectorAssoc)
     visEdges<- data.frame(from = assocNetwork[,1],
                           to = assocNetwork[,2],
                           title = assocNetwork[,3])

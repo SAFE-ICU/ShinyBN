@@ -56,7 +56,8 @@ shinyServer(function(input, output,session) {
   #Association Network
   assocNetwork<-custom.association(DiscreteData,"cramer's V")
   assocNetworkprune<- assocNetwork[which(assocNetwork[,3]>0.3),]
-  output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,2,'layout_nicely')})
+  shapeVectorAssoc<- rep('dot',length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2]))))
+  output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,2,'layout_nicely',shapeVectorAssoc)})
 
 
   observeEvent(input$start,{
@@ -64,12 +65,14 @@ shinyServer(function(input, output,session) {
     })
   observeEvent(input$threshold,{
     assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
-    output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
+    shapeVectorAssoc<<- rep('dot',length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2]))))
+    output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
   })
   observeEvent(input$association,{
     assocNetwork<<-custom.association(DiscreteData,input$assocType)
     assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
-    output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
+    shapeVectorAssoc<<- rep('dot',length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2]))))
+    output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
   })
   #Data Frame From User
   observeEvent(input$dataFile,{
@@ -615,7 +618,7 @@ shinyServer(function(input, output,session) {
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
       assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
-      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -640,7 +643,7 @@ shinyServer(function(input, output,session) {
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
       assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
-      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -663,7 +666,7 @@ shinyServer(function(input, output,session) {
         EventNode = input$event
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
-    },error = function(e){
+      },error = function(e){
       shinyalert(toString(e), type = "error")
 
     })
@@ -672,6 +675,7 @@ shinyServer(function(input, output,session) {
   observeEvent(input$group,{
     tryCatch({
       shapeVector[which(nodeNames %in% input$varselect)] <<- input$varshape
+      shapeVectorAssoc[which(nodeNames %in% input$varselect)] <<- input$varshape
       for(elem in inserted)
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
@@ -686,6 +690,7 @@ shinyServer(function(input, output,session) {
         EventNode = input$event
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 
@@ -698,6 +703,8 @@ shinyServer(function(input, output,session) {
     tryCatch({
       shapeVector<<-shapeVector[1:length(nodeNames)]
       shapeVector[eval(parse(text = input$varselectvector))] <<- input$varshape2
+      shapeVectorAssoc<<-shapeVectorAssoc[1:length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2])))]
+      shapeVectorAssoc[eval(parse(text = input$varselectvector))] <<- input$varshape2
       for(elem in inserted)
       {
         EvidenceNode = c(EvidenceNode,input[[elem]])
@@ -712,6 +719,7 @@ shinyServer(function(input, output,session) {
         EventNode = input$event
       }
       output$netPlot<-renderVisNetwork({graph.custom(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,input$degree,input$graph_layout)})
+      output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
     },error = function(e){
       shinyalert(toString(e), type = "error")
 

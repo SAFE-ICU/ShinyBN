@@ -97,8 +97,7 @@ dashboardPage(skin = "blue",
                                                                )
 
                                                       )),
-                              shinydashboard::tabItem(
-                                                      tabName = "Structure",
+                              shinydashboard::tabItem(tabName = "Structure",
                                                       shiny::fluidRow(
                                                         shiny::column(
                                                           width = 3,
@@ -107,43 +106,68 @@ dashboardPage(skin = "blue",
                                                           tabBox(width=12,id="control_tabs",
                                                                  tabPanel("Data",
                                                                           div(id = "data",
-                                                                          div(id = "dataFormat",
-                                                                            shiny::h4("Upload Data:"),
-                                                                            shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
-                                                                            h5('Data Format:'),
-                                                                            shiny::selectInput('format',label = NULL,c(".RData",".CSV")),
-                                                                            h5('File Input:'),
-                                                                            shiny::fileInput('dataFile',
-                                                                                             label = NULL,
-                                                                                             accept = c('.RData','.csv')
-                                                                                             )),
-                                                                          hr(),
-                                                                          div(id="dataImpute",
-                                                                          shiny::h4("Impute Missing Data:"),
-                                                                          actionButton('impute','Impute')),
-                                                                          hr(),
-                                                                          div(id="dataDiscretize",
-                                                                          shiny::h4('Discretize Data'),
-                                                                          h5('Discretization Type:'),
-                                                                          shiny::selectInput('dtype',label = NULL,c("interval","quantile","frequency","cluster","hybrid")),
-                                                                          actionButton('discretize',"Discretize"),
-                                                                          h5("Association Network"),
-                                                                          shiny::selectInput('assocType',label = NULL,c("cramer's V","Cohen's D","Goodman Kruskal lambda","Tschuprow's T")),
-                                                                          actionButton('association',"Build")
-                                                                          ))),
+                                                                              shinyWidgets::radioGroupButtons(inputId = "dataOptions",
+                                                                                                              choices = c("Upload","Edit","Explore"),
+                                                                                                              selected = "Upload",
+                                                                                                              justified = FALSE
+                                                                                                              ),
+                                                                              shiny::conditionalPanel(
+                                                                                condition = "input.dataOptions == 'Upload'",
+                                                                                shiny::h4("Upload Data:"),
+                                                                                shiny::helpText("Select prefered input format(RData suggested for data > 100mb)"),
+                                                                                h5('Data Format:'),
+                                                                                shiny::selectInput('format',label = NULL,c(".RData",".CSV")),
+                                                                                h5('File Input:'),
+                                                                                shiny::fileInput('dataFile',
+                                                                                                 label = NULL,
+                                                                                                 accept = c('.RData','.csv')
+                                                                                )
+                                                                              ),
+                                                                              shiny::conditionalPanel(
+                                                                                condition = "input.dataOptions=='Edit'",
+                                                                                hr(),
+                                                                                div(id="dataImpute",
+                                                                                    shiny::h4("Impute Missing Data:"),
+                                                                                    actionButton('impute','Impute')),
+                                                                                hr(),
+                                                                                div(id="dataDiscretize",
+                                                                                    shiny::h4('Discretize Data'),
+                                                                                    h5('Discretization Type:'),
+                                                                                    shiny::selectInput('dtype',label = NULL,c("interval","quantile","frequency","cluster","hybrid")),
+                                                                                    actionButton('discretize',"Discretize")
+                                                                              )),
+                                                                              shiny::conditionalPanel(
+                                                                                condition = "input.dataOptions=='Explore'",
+                                                                                h5("Association Network"),
+                                                                                shiny::selectInput('assocType',label = NULL,c("cramer's V","Cohen's D","Goodman Kruskal lambda","Tschuprow's T")),
+                                                                                actionButton('association',"Build")
+                                                                              )
+                                                                              )
+                                                                          ),
                                                                  tabPanel("Learning",
                                                                           status = "primary",
 
 
                                                                           shiny::h4("Structure"),
                                                                           shinyWidgets::radioGroupButtons(inputId = "net",
-                                                                                                          choices = c("Learn Structure" = 2,
-                                                                                                                      "Upload Structure" = 1),
+                                                                                                          choices = c("Learn" = 2,
+                                                                                                                      "Upload" = 1,
+                                                                                                                      "Validate" = 3),
                                                                                                           selected = 1,
                                                                                                           justified = FALSE
                                                                           ),
 
                                                                           # Conditional panel for uploading structure
+                                                                          shiny::conditionalPanel(
+                                                                            condition = "input.net==3",
+                                                                            shiny::selectInput('crossFunc',label = NULL,choices = c("k-fold","hold-out")),
+                                                                            shiny::selectInput('paramMethod3',label = NULL,choices = c("Maximum Likelihood parameter estimation" = "mle","Bayesian parameter estimation" = "bayes")),
+                                                                            shiny::selectInput('lossFunc',label = NULL,choices = c("pred","pred-lw")),
+                                                                            shiny::actionButton("calLoss","Cross Validate"),
+                                                                            h5("Log-Likelihood Loss"),
+                                                                            shiny::verbatimTextOutput("valLoss")
+
+                                                                          ),
                                                                           shiny::conditionalPanel(
 
                                                                             condition = "input.net == 1",
@@ -170,7 +194,8 @@ dashboardPage(skin = "blue",
                                                                             shiny::selectizeInput(
                                                                               inputId = "alg",
                                                                               shiny::h5("Learning Algorithm:"),
-                                                                              choices = list(
+                                                                              choices = list("Popular Choice" =
+                                                                                c("PC" = "pc.stable"),
                                                                                 "Score-based Learning" =
                                                                                   c("Hill Climbing" = "hc",
                                                                                     "Tabu" = "tabu"),

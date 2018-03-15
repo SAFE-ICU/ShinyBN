@@ -60,8 +60,19 @@ shinyServer(function(input, output,session) {
   shapeVectorAssoc<- rep('dot',length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2]))))
   output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,2,'layout_nicely',shapeVectorAssoc)})
   #Tables
-  updateSelectInput(session,"tableName",choices = c("Data","Association Graph","Bayesian Graph"))
+  updateSelectInput(session,"tableName",choices = c("Data","Association Graph","Bayesian Graph","Cross Validation Results"))
   output$tableOut<- DT::renderDataTable({DiscreteData},options = list(scrollX = TRUE,pageLength = 10))
+  #Validation
+  bn.validate<-bn.cv(DiscreteData[,nodeNames],bn=bn.hc.boot.average)
+  predError<-c()
+  for(n in nodeNames)
+  {
+    targetLoss<-bn.cv(DiscreteData[,nodeNames],bn=bn.hc.boot.average,loss = "pred",loss.args = list(target = n))
+    predError<-rbind(predError,targetLoss[[1]]$loss)
+  }
+  rownames(predError)<-nodeNames
+  colnames(predError)<-"Classification Error"
+  output$valLoss<-renderText({bn.validate[[1]]$loss})
   observeEvent(input$tableName,{
     if(input$tableName=="Data")
     {
@@ -74,6 +85,10 @@ shinyServer(function(input, output,session) {
     else if(input$tableName=="Bayesian Graph")
     {
       output$tableOut<- DT::renderDataTable({NetworkGraph},options = list(scrollX = TRUE,pageLength = 10))
+    }
+    else if(input$tableName=="Cross Validation Results")
+    {
+      output$tableOut<- DT::renderDataTable({predError},options = list(scrollX = TRUE,pageLength = 10))
     }
   })
   observeEvent(input$start,{
@@ -89,6 +104,19 @@ shinyServer(function(input, output,session) {
     assocNetworkprune<<- assocNetwork[which(assocNetwork[,3]>input$threshold),]
     shapeVectorAssoc<<- rep('dot',length(unique(c(assocNetworkprune[,1],assocNetworkprune[,2]))))
     output$assocPlot<-renderVisNetwork({graph.custom.assoc(assocNetworkprune,unique(c(assocNetworkprune[,1],assocNetworkprune[,2])),EvidenceNode,EventNode,input$degree,input$graph_layout,shapeVectorAssoc)})
+  })
+  observeEvent(input$calLoss,{
+    withProgress(message = "Validating Model", value = 0, {
+    bn.validate<-bn.cv(DiscreteData[,nodeNames],bn=bn.hc.boot.average,fit = input$paramMethod3,method = input$crossFunc)
+    predError<<-c()
+    for(n in nodeNames)
+    {
+      targetLoss<<-bn.cv(DiscreteData[,nodeNames],bn=bn.hc.boot.average,fit = input$paramMethod3,loss = input$lossFunc,method = input$crossFunc,loss.args = list(target = n))
+      predError<<-rbind(predError,targetLoss[[1]]$loss)
+    }
+    rownames(predError)<<-nodeNames
+    colnames(predError)<<-"Classification Error"
+    output$valLoss<<-renderText({bn.validate[[1]]$loss})})
   })
   #Data Frame From User
   observeEvent(input$dataFile,{
@@ -345,6 +373,10 @@ shinyServer(function(input, output,session) {
       if(input$alg == 'hc')
       {
         bn.hc.boot.average <<- cextend(bnlearn::hc(DiscreteData))
+      }
+      else if(input$alg =="pc.stable")
+      {
+        bn.hc.boot.average <<- cextend(bnlearn::pc.stable(DiscreteData))
       }
       else if(input$alg == 'tabu')
       {

@@ -22,8 +22,13 @@ graph.custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNo
              visOptions(highlightNearest = list(enabled =TRUE, degree = Ndegree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
                           list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
              visInteraction(navigationButtons = TRUE)%>%
-             visIgraphLayout(layout = Tlayout))
+             visIgraphLayout(layout = Tlayout)%>%
+             visEvents(select = "function(nodes) {
+                Shiny.onInputChange('current_node_id', nodes.nodes);
+                       ;}")
+           )
   },error=function(e){
+    print(e)
     shinyalert(e)
   })
 

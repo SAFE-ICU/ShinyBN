@@ -1,6 +1,11 @@
 graph.custom.assoc <- function(assocNetwork,nodeNames,EvidenceNode,EventNode,Ndegree,Tlayout,shapeVectorAssoc)
 {
+  defLeg<-TRUE
   tryCatch({
+    if(!(EventNode %in% nodeNames))
+    {
+      defLeg<-FALSE
+    }
     nodes <- data.frame(name = nodeNames)
     nodes$id <- 0:(nrow(nodes) - 1)
     nodes$group <- "not in use"
@@ -18,12 +23,15 @@ graph.custom.assoc <- function(assocNetwork,nodeNames,EvidenceNode,EventNode,Nde
              visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
              visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
              visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
-             visLegend(width = 0.1, position = "left")%>%
+             visLegend(width = 0.1, position = "left",enabled=defLeg)%>%
              visNodes(shape = "dot") %>%
              visOptions(highlightNearest = list(enabled =TRUE, degree = Ndegree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
                           list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
              visInteraction(navigationButtons = TRUE)%>%
-             visIgraphLayout(layout = Tlayout))
+             visIgraphLayout(layout = Tlayout)%>%
+             visExport(type = "png", name = "association network",
+                       float = "right", label = "Save network", background = "white", style= "")
+           )
   },error=function(e){
     print(e)
   })

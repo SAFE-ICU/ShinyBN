@@ -1,5 +1,10 @@
 graph.custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNode,Ndegree,Tlayout)
 {
+  defLeg<-TRUE
+  if(!(EventNode %in% nodeNames))
+  {
+    defLeg<-FALSE
+  }
   tryCatch({
     nodes <- data.frame(name = nodeNames)
     nodes$id <- 0:(nrow(nodes) - 1)
@@ -17,7 +22,7 @@ graph.custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNo
              visGroups(groupname = "not in use", color = list(background = "lightblue",highlight = 'blue', hover = "blue")) %>%
              visGroups(groupname = "Event", color = list(background = "lightgreen",highlight = "green", hover = "green"))%>%
              visGroups(groupname = "Evidence", color = list(background = "pink",highlight = "red", hover = "red")) %>%
-             visLegend(width = 0.1, position = "left")%>%
+             visLegend(width = 0.1, position = "left",enabled=defLeg)%>%
              visNodes(shape = "dot") %>%
              visOptions(highlightNearest = list(enabled =TRUE, degree = Ndegree,hover = T, hideColor = 'rgba(200,200,200,0)'), nodesIdSelection =
                           list(enabled = TRUE, style = 'width: 100px; height: 20px;background: #f8f8f8;border:none;outline:none;'))%>%
@@ -25,7 +30,9 @@ graph.custom <- function(NetworkGraph,nodeNames,shapeVector,EvidenceNode,EventNo
              visIgraphLayout(layout = Tlayout)%>%
              visEvents(select = "function(nodes) {
                 Shiny.onInputChange('current_node_id', nodes.nodes);
-                       ;}")
+                       ;}")%>%
+             visExport(type = "png", name = "bayesian network",
+                       float = "right", label = "Save network", background = "white", style= "")
            )
   },error=function(e){
     print(e)

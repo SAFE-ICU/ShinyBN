@@ -10,11 +10,25 @@ library('missRanger')
 library('tools')
 library('shinyalert')
 library('shinycssloaders')
-library('shinythemes')
-library('shinyBS')
 library('rintrojs')
+library('arules')
+library('rcompanion')
+library('psych')
+library('DescTools')
 library("DT")
+library("linkcomm")
+library('igraph')
+library("parallel")
+library("snow")
+library("shinyBS")
 source('error.bar.R')
+source('graph.custom.R')
+source('graph.custom.assoc.R')
+source('custom.discretize.R')
+source('check.NA.R')
+source('check.discrete.R')
+source('custom.association.R')
+source('custom.Modules.R')
 
 
 myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
@@ -55,8 +69,8 @@ dashboardPage(skin = "blue",
                                            menuItem(text = "",
                                                     icon = shiny::icon("github"),
                                                     href = "https://github.com/SAFE-ICU/ShinyBN"),
-                                         menuItem(text = "",
-                                                  icon = shiny::icon("info"),
+                                          menuItem(text = "",
+                                                    icon = shiny::icon("info"),
                                                   tabName = "About"))
                                ),
               dashboardBody(id ="dashboardBody",
@@ -89,7 +103,7 @@ dashboardPage(skin = "blue",
                                                                    ),
                                                                    hr(),
                                                                    div(style="text-align:center",
-                                                                       actionButton("start", "Start Here", style  = "background-color:#2E86C1;color:white;height:50px;font-size:20px", width = '300px', align = "center")
+                                                                       actionButton("start", "Start Analyzing", style  = "background-color:#2E86C1;color:white;height:50px;font-size:20px", width = '300px', align = "center")
                                                                    )
                                                                )
 
@@ -107,7 +121,7 @@ dashboardPage(skin = "blue",
                                                                  tabPanel("Data",
                                                                           div(id = "data",
                                                                               shinyWidgets::radioGroupButtons(inputId = "dataOptions",
-                                                                                                              choices = c("Upload","Edit","Explore"),
+                                                                                                              choices = c("Upload","Pre-process","Explore"),
                                                                                                               selected = "Upload",
                                                                                                               justified = FALSE
                                                                                                               ),
@@ -125,7 +139,7 @@ dashboardPage(skin = "blue",
                                                                                 )
                                                                               ),
                                                                               shiny::conditionalPanel(
-                                                                                condition = "input.dataOptions=='Edit'",
+                                                                                condition = "input.dataOptions=='Pre-process'",
                                                                                 hr(),
                                                                                 div(id="dataImpute",
                                                                                     shiny::h4("Impute Missing Data:"),
@@ -197,9 +211,8 @@ dashboardPage(skin = "blue",
                                                                             shiny::selectizeInput(
                                                                               inputId = "alg",
                                                                               shiny::h5("Learning Algorithm:"),
-                                                                              choices = list("Popular Choice" =
-                                                                                c("PC" = "pc.stable"),
-                                                                                "Score-based Learning" =
+                                                                              choices = list(
+                                                                                "Score-based Learning(recommended)" =
                                                                                   c("Hill Climbing" = "hc",
                                                                                     "Tabu" = "tabu"),
                                                                                 "Constraint-based Learning" =
@@ -210,7 +223,8 @@ dashboardPage(skin = "blue",
                                                                                   ),
                                                                                 "Hybrid Learning" =
                                                                                   c("Max-Min Hill Climbing" = "mmhc",
-                                                                                    "2-phase Restricted Maximization" = 'rsmax2'
+                                                                                    "2-phase Restricted Maximization" = 'rsmax2',
+                                                                                    "PC" = "pc.stable"
                                                                                   ),
                                                                                 "Local Discovery Learning" =
                                                                                   c("Max-Min Parents and Children" = 'mmpc',
@@ -242,15 +256,13 @@ dashboardPage(skin = "blue",
                                                                                         value = 0.5),
                                                                             h5("Parameter Learning Type"),
                                                                             selectizeInput("paramMethod2",label = NULL,choices = c("Maximum Likelihood parameter estimation" = "mle","Bayesian parameter estimation" = "bayes")),
-                                                                            h5("Use the tables to select edges to whitelist & blacklist or upload edge list below"),
+                                                                            h5("Inject Expert Knowledge by Forcing/Prohibiting Edges"),
                                                                             shiny::fluidRow(shiny::column(6,selectInput("listType",label = NULL,choices = c("Blacklist","Whitelist"))),shiny::column(6,shiny::fileInput('listFile',label = NULL,accept = c('.csv')))),
                                                                             actionButton('learnBtn', 'Bootstrap'),
                                                                             actionButton('learnSBtn','Direct'),
                                                                             hr(),
                                                                             shiny::h5("Save learned structure"),
-                                                                            actionButton('saveBtn','Save'),
-                                                                            textInput('path','Enter Directory with file Name', value = "file type .RData", width = NULL, placeholder = NULL)
-
+                                                                            downloadButton('saveBtn','Save')
                                                                           ))
                                                                  ),
                                                                  tabPanel("Graph",
@@ -282,14 +294,7 @@ dashboardPage(skin = "blue",
                                                                               hr(),
                                                                               div(id="graphLayout",
                                                                                   h4("Select Graph Layout"),
-                                                                                  shiny::selectInput('graph_layout',label = NULL,"layout_nicely")),
-                                                                              hr(),
-                                                                              div(id="graphSave",
-                                                                                  h5('Enter Directory with file Name:'),
-                                                                                  textInput('path2',label = NULL, value = "file type .csv", width = NULL, placeholder = "R code for vector of indices")),
-                                                                                  h4("Save Network Graph"),
-                                                                                  actionButton('saveBtn2','Save')
-
+                                                                                  shiny::selectInput('graph_layout',label = NULL,"layout_nicely"))
                                                                           )),
                                                                  tabPanel("Inference",
                                                                           status = "primary",
@@ -327,7 +332,22 @@ dashboardPage(skin = "blue",
                                                           style='padding:0px;margin:0px',
                                                           tabBox(id = "visula_tabs",
                                                                  width = 12,
+                                                                 tabPanel("Association Graph",
+                                                                          sliderInput("threshold", label = "Association Threshold",min = 0, max = 1,value = 0.25
+                                                                          ),
+                                                                          div(style = "position:absolute;right:1em;margin-right:10px;",
+                                                                              bsButton('graphBtn2', '', icon = icon("refresh"),style = "default")
+                                                                              #bsButton('secondSaveBtn', '', icon = icon("save"),style="default")
 
+                                                                          ),
+
+                                                                          bsPopover('graphBtn2', trigger = "hover", title = "Update", content = "Reloads the network graph", placement = "left", options = list(container = "body")),
+                                                                          #bsPopover('secondSaveBtn', trigger = "hover", title = "Save",
+                                                                          #content = "Saves graph to XYZ file. Go to Graph tab for more options",
+                                                                          #placement = "bottom", options = list(container = "body")),
+                                                                          br(),
+                                                                          withSpinner(visNetworkOutput("assocPlot",height = "600px"), color= "#2E86C1")
+                                                                 ),
                                                                  tabPanel("Network Graph",
                                                                           shiny::fluidRow(shiny::column(6,shiny::selectInput("moduleSelection",label = "Module","graph")),shiny::column(3,shiny::selectInput("neighbornodes",label = "Nth Neighbor List",choices = ""))),
                                                                           div(style = "position:absolute;right:1em;margin-right:10px;",
@@ -336,21 +356,13 @@ dashboardPage(skin = "blue",
 
                                                                           ),
 
-                                                                          bsPopover('GraphBtn', trigger = "hover", title = "Update", content = "Reloads the network graph", placement = "left", options = list(container = "body")),
+                                                                          bsPopover('graphBtn', trigger = "hover", title = "Update", content = "Reloads the network graph", placement = "left", options = list(container = "body")),
                                                                           #bsPopover('secondSaveBtn', trigger = "hover", title = "Save",
                                                                                     #content = "Saves graph to XYZ file. Go to Graph tab for more options",
                                                                                     #placement = "bottom", options = list(container = "body")),
                                                                           br(),
                                                                           withSpinner(visNetworkOutput("netPlot",height = "600px"), color= "#2E86C1")
                                                                          ),
-                                                                 tabPanel("Association Graph",
-                                                                          sliderInput("threshold", label = "Association Threshold",
-                                                                                      min = 0, max = 1,
-                                                                                      value = 1
-                                                                          ),
-                                                                          withSpinner(visNetworkOutput("assocPlot",height = "600px"), color= "#2E86C1")
-                                                                          ),
-
                                                                  tabPanel("Inference Plot",
                                                                           sliderInput("NumBar", label = "No. of bars",min = 0, max = 1,value = 1,step=1),
                                                                           actionButton("sortPlot","Sort X-axis"),
@@ -359,7 +371,7 @@ dashboardPage(skin = "blue",
                                                                           selectInput("paramSelect",label = "Variable",""),
                                                                           withSpinner(plotOutput("parameterPlot",height = "600px")),color="#2E86C1"),
                                                                  tabPanel("Tables",
-                                                                          shiny::fluidRow(shiny::column(4,selectInput("tableName",label = NULL,"")),shiny::column(2,actionButton("subsetBTN","subset")),shiny::column(1,actionButton("resetBTN","reset"))),
+                                                                          shiny::fluidRow(shiny::column(4,selectInput("tableName",label = NULL,"")),shiny::column(1,downloadButton("downloadData", "Download"))),
                                                                           withSpinner(DT::dataTableOutput("tableOut")),color = "#2E86C1")
                                                                  )
                                                           )

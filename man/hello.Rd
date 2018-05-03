@@ -1,12 +1,11 @@
-\name{hello}
-\alias{hello}
-\title{Hello, World!}
+\name{wiseR}
+\title{Interactive Bayesian Learning Dashboard}
 \usage{
-hello()
+wiser()
 }
 \description{
-Prints 'Hello, world!'.
+paper link,github link
 }
 \examples{
-hello()
+
 }
